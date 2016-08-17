@@ -82,17 +82,33 @@ Zone['longStackTraceZoneSpec'] = <ZoneSpec>{
     if (trace.length > this.longStackTraceLimit) {
       trace.length = this.longStackTraceLimit;
     }
-    if (!task.data) task.data = {};
-    task.data[creationTrace] = trace;
-    return parentZoneDelegate.scheduleTask(targetZone, task);
-  },
 
-  onHandleError: function(
-      parentZoneDelegate: ZoneDelegate, currentZone: Zone, targetZone: Zone, error: any): any {
-    const parentTask = Zone.currentTask || error.task;
-    if (error instanceof Error && parentTask) {
-      var stackSetSucceded: string|boolean = null;
-      try {
+    return longTrace.join(NEWLINE);
+  }
+
+  Zone['longStackTraceZoneSpec'] = <ZoneSpec>{
+    name: 'long-stack-trace',
+    longStackTraceLimit: 10, // Max number of task to keep the stack trace for.
+
+    onScheduleTask: function(parentZoneDelegate: ZoneDelegate, currentZone: Zone, targetZone: Zone,
+                          task: Task): any
+    {
+      const currentTask = Zone.currentTask;
+      let trace = currentTask && currentTask.data && currentTask.data[creationTrace] || [];
+      trace = [new LongStackTrace()].concat(trace);
+      if (trace.length > this.longStackTraceLimit) {
+        trace.length = this.longStackTraceLimit;
+      }
+      if (!task.data) task.data = {};
+      task.data[creationTrace] = trace;
+      return parentZoneDelegate.scheduleTask(targetZone, task);
+    },
+
+    onHandleError: function(parentZoneDelegate: ZoneDelegate, currentZone: Zone, targetZone: Zone,
+                 error: any): any
+    {
+      const parentTask = Zone.currentTask || error.task;
+      if (error instanceof Error && parentTask) {
         let descriptor = Object.getOwnPropertyDescriptor(error, 'stack');
         if (descriptor && descriptor.configurable) {
           const delegateGet = descriptor.get;

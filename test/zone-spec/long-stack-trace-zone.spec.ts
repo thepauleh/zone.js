@@ -45,43 +45,21 @@ describe('longStackTraceZone', function() {
     });
   });
 
-  it('should produce a long stack trace even if stack setter throws', (done) => {
-    let wasStackAssigne = false;
-    let error = new Error('Expected error');
-    defineProperty(error, 'stack', {
-      configurable: false,
-      get: () => 'someStackTrace',
-      set: (v) => {
-        throw new Error('no writes');
-      }
-    });
-    lstz.run(() => {
-      setTimeout(() => {
-        throw error;
-      });
-    });
-    setTimeout(() => {
-      var e = log[0];
-      expect((e as any).longStack).toBeTruthy();
-      done();
-    });
-  });
-
   it('should produce long stack traces when reject in promise', function(done) {
-    lstz.runGuarded(function() {
-      setTimeout(function() {
-        setTimeout(function() {
-          let promise = new Promise(function(resolve, reject) {
-            setTimeout(function() {
-              reject(new Error('Hello Promise'));
-            }, 0);
+    lstz.runGuarded(function () {
+      setTimeout(function () {
+        setTimeout(function () {
+          let promise = new Promise(function (resolve, reject) {
+             setTimeout(function (){
+               reject(new Error('Hello Promise'));
+             }, 0);
           });
           promise.then(function() {
             fail('should not get here');
           });
-          setTimeout(function() {
+          setTimeout(function () {
             try {
-              expect(log[0].stack.split('Elapsed: ').length).toBe(5);
+              expect(log[0].split('Elapsed: ').length).toBe(5);
               done();
             } catch (e) {
               expect(e).toBe(null);
