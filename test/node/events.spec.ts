@@ -79,6 +79,24 @@ describe('nodejs EventEmitter', () => {
       expect(emitter.listeners('test')).toEqual([]);
     });
   });
+  it ('should prepend listener by order', () => {
+    zoneA.run(() => {
+        emitter.on('test', listenerA);
+        emitter.on('test', listenerB);
+        expect(emitter.listeners('test')).toEqual([listenerA, listenerB]);
+        emitter.emit('test');
+        expect(zoneResults).toEqual(['A', 'B']);
+        zoneResults = [];
+
+        emitter.removeAllListeners('test');
+
+        emitter.on('test', listenerA);
+        emitter.prependListener('test', listenerB);
+        expect(emitter.listeners('test')).toEqual([listenerB, listenerA]);
+        emitter.emit('test');
+        expect(zoneResults).toEqual(['B', 'A']);
+    });
+  });
   it ('should remove All listeners properly', () => {
     zoneA.run(() => {
       emitter.on('test', expectZoneA);
@@ -87,7 +105,14 @@ describe('nodejs EventEmitter', () => {
       expect(emitter.listeners('test').length).toEqual(0);
     });
   });
-  it ('should remove once listener properly', () => {
+  it ('should remove once listener after emit', () => {
+    zoneA.run(() => {
+      emitter.once('test', expectZoneA);
+      emitter.emit('test', 'test value');
+      expect(emitter.listeners('test').length).toEqual(0);
+    });
+  });
+  it ('should remove once listener properly before listener triggered', () => {
     zoneA.run(() => {
       emitter.once('test', shouldNotRun);
       emitter.removeListener('test', shouldNotRun);
