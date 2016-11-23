@@ -1345,6 +1345,13 @@ const Zone: ZoneType = (function(global: any) {
     });
   }
 
+  Object.defineProperty(ZoneAwareError, 'prepareStackTrace', {
+    get: function() { return NativeError.prepareStackTrace; },
+    set: function(value) { return NativeError.prepareStackTrace = value; }
+  });
+
+  // Now we need to populet the `blacklistedStackFrames` as well as find the
+
   // Now we need to populet the `blacklistedStackFrames` as well as find the
   // run/runGuraded/runTask frames. This is done by creating a detect zone and then threading
   // the execution through all of the above methods so that we can look at the stack trace and
