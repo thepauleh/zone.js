@@ -1337,20 +1337,13 @@ const Zone: ZoneType = (function(global: any) {
     });
   }
 
-  if (NativeError.hasOwnProperty('captureStackTrace')) {
+  if (NativeError.captureStackTrace) {
     Object.defineProperty(ZoneAwareError, 'captureStackTrace', {
       value: function(targetObject: Object, constructorOpt?: Function) {
         NativeError.captureStackTrace(targetObject, constructorOpt);
       }
     });
   }
-
-  Object.defineProperty(ZoneAwareError, 'prepareStackTrace', {
-    get: function() { return NativeError.prepareStackTrace; },
-    set: function(value) { return NativeError.prepareStackTrace = value; }
-  });
-
-  // Now we need to populet the `blacklistedStackFrames` as well as find the
 
   // Now we need to populet the `blacklistedStackFrames` as well as find the
   // run/runGuraded/runTask frames. This is done by creating a detect zone and then threading
