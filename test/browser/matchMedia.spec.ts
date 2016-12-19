@@ -38,7 +38,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
     newWindow = window.open("","", "width=100, height=100");
-    console.log('open new window', newWindow.matchMedia);
+    console.log('open new window', window.matchMedia, newWindow.matchMedia);
     mql = newWindow.matchMedia("(min-width: 500px)");
     console.log('mql', mql);
     // we set prototype here because the new created window is not
