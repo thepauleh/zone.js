@@ -144,12 +144,8 @@ if (_global['navigator'] && _global['navigator'].geolocation) {
   patchPrototype(_global['navigator'].geolocation, ['getCurrentPosition', 'watchPosition']);
 }
 
-function mediaQueriesSupported(_global: any) {
-  return (typeof _global.matchMedia != 'undefined' || typeof (<any>_global).msMatchMedia != 'undefined');
-}
-
 function patchMediaQuery(_global: any) {
-  if (!mediaQueriesSupported(_global) || !_global['MediaQueryList']) {
+  if (!_global['MediaQueryList']) {
     return;
   }
   patchEventTargetMethods(_global['MediaQueryList'].prototype, 'addListener', 'removeListener',
