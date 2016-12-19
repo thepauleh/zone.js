@@ -14,6 +14,8 @@ const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
 }
 
 function mediaQueriesSupported() {
+  console.log('window.matchMedia', window.matchMedia);
+  console.log('window.msMatchMedia', (<any>window).msMatchMedia);
   return (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
 }
 (<any>mediaQueriesSupported).message = 'MatchMedia';
