@@ -53,6 +53,8 @@ describe('Zone', function() {
         clickEvent = document.createEvent('Event');
         clickEvent.initEvent('click', true, true);
         document.body.appendChild(button);
+
+        window['clickcount'] = 0;
       });
 
       afterEach(function() {
@@ -138,8 +140,11 @@ describe('Zone', function() {
         });
 
         zone.run(function() {
-          button.setAttribute('onclick', 'return');
+          button.setAttribute('onclick', 'window["clickcount"]= window["clickcount"]+ 1');
           expect(button.onclick).not.toBe(null);
+          button.dispatchEvent(clickEvent);
+          // click event handler should only be called once
+          expect(window['clickcount']).toBe(1);
         });
       })
     });

@@ -7,7 +7,8 @@
  */
 
 import {patchTimer} from '../common/timers';
-import {patchClass, patchMethod, patchPrototype, zoneSymbol} from '../common/utils';
+import {patchClass, patchMethod, patchPrototype, zoneSymbol, patchEventTargetMethods,
+        NestedEventListenerOrEventListenerObject} from '../common/utils';
 
 import {propertyPatch} from './define-property';
 import {eventTargetPatch} from './event-target';
@@ -42,6 +43,9 @@ patchClass('WebKitMutationObserver');
 patchClass('FileReader');
 propertyPatch();
 registerElementPatch(_global);
+
+// patch MediaQuery
+patchMediaQuery(_global);
 
 // Treat XMLHTTPRequest as a macrotask.
 patchXHR(_global);
@@ -138,4 +142,40 @@ function patchXHR(window: any) {
 /// GEO_LOCATION
 if (_global['navigator'] && _global['navigator'].geolocation) {
   patchPrototype(_global['navigator'].geolocation, ['getCurrentPosition', 'watchPosition']);
+}
+
+export function mediaQueriesSupported(_global: any) {
+  return (typeof _global.matchMedia != 'undefined' || typeof (<any>_global).msMatchMedia != 'undefined');
+}
+
+function patchMediaQuery(_global: any) {
+  if (!mediaQueriesSupported(_global) || !_global['MediaQueryList']) {
+    return;
+  }
+  patchEventTargetMethods(_global['MediaQueryList'].prototype, 'addListener', 'removeListener',
+    (self, args) => {
+      return {
+        useCapturing: false,
+        eventName: 'mediaQuery',
+        handler: args[0],
+        target: self || _global,
+        name: 'mediaQuery',
+        invokeAddFunc: function (addFnSymbol: any,
+                                 delegate: Task | NestedEventListenerOrEventListenerObject) {
+          if (delegate && (<Task>delegate).invoke) {
+            return this.target[addFnSymbol]((<Task>delegate).invoke);
+          } else {
+            return this.target[addFnSymbol](delegate);
+          }
+        },
+        invokeRemoveFunc: function (removeFnSymbol:any,
+                                    delegate: Task | NestedEventListenerOrEventListenerObject) {
+          if (delegate && (<Task>delegate).invoke) {
+            return this.target[removeFnSymbol]((<Task>delegate).invoke);
+          } else {
+            return this.target[removeFnSymbol](delegate);
+          }
+        }
+      };
+  });
 }

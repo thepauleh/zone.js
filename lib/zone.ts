@@ -1315,7 +1315,7 @@ const Zone: ZoneType = (function(global: any) {
     this.message = error.message;
 
     // Save original stack trace
-    this.originalStack = error.stack;
+    this.stack = this.originalStack = error.stack;
 
     // Process the stack trace and rewrite the frames.
     if (ZoneAwareError[stackRewrite] && this.originalStack) {
