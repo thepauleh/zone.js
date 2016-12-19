@@ -8,10 +8,10 @@
 
 import {ifEnvSupports} from '../test-util';
 
-var setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
-    obj.__proto__ = proto;
-    return obj;
-  }
+const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
+  obj.__proto__ = proto;
+  return obj;
+}
 
 function supportsMatchMedia() {
   return 'matchMedia' in window;

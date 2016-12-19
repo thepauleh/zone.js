@@ -144,7 +144,7 @@ if (_global['navigator'] && _global['navigator'].geolocation) {
   patchPrototype(_global['navigator'].geolocation, ['getCurrentPosition', 'watchPosition']);
 }
 
-export function mediaQueriesSupported(_global: any) {
+function mediaQueriesSupported(_global: any) {
   return (typeof _global.matchMedia != 'undefined' || typeof (<any>_global).msMatchMedia != 'undefined');
 }
 
