@@ -14,6 +14,7 @@ const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
 }
 
 function mediaQueriesSupported() {
+  console.log('check supported');
   console.log('window.matchMedia', window.matchMedia);
   console.log('window.msMatchMedia', (<any>window).msMatchMedia);
   return (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
@@ -39,6 +40,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
     newWindow = window.open("","", "width=100, height=100");
+    console.log('open new window');
     mql = newWindow.matchMedia("(min-width: 500px)");
     // we set prototype here because the new created window is not
     // patched by zone, and since Firefox 7, we can't resize a window
