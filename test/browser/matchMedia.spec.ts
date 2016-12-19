@@ -14,17 +14,8 @@ const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
 }
 
 function mediaQueriesSupported() {
-  console.log('check supported');
-  console.log('window.matchMedia', window.matchMedia);
-  console.log('window.msMatchMedia', (<any>window).msMatchMedia);
-  let r = (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
-  let newWindow = window.open("","", "width=100, height=100");
-  try {
-    let rr = (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
-    return r && rr;
-  } finally {
-    newWindow.close();
-  }
+  return 'matchMedia' in window;
+
 }
 (<any>mediaQueriesSupported).message = 'MatchMedia';
 
