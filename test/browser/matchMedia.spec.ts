@@ -42,10 +42,12 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     newWindow = window.open("","", "width=100, height=100");
     console.log('open new window', newWindow.matchMedia);
     mql = newWindow.matchMedia("(min-width: 500px)");
+    console.log('mql', mql);
     // we set prototype here because the new created window is not
     // patched by zone, and since Firefox 7, we can't resize a window
     // or tab that wasn't created by window.open()
     setPrototypeOf(mql, MediaQueryList.prototype);
+    console.log('mql setprototype');
   });
 
   afterEach(function() {
