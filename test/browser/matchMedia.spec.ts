@@ -17,7 +17,14 @@ function mediaQueriesSupported() {
   console.log('check supported');
   console.log('window.matchMedia', window.matchMedia);
   console.log('window.msMatchMedia', (<any>window).msMatchMedia);
-  return (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
+  let r = (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
+  let newWindow = window.open("","", "width=100, height=100");
+  try {
+    let rr = (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
+    return r && rr;
+  } finally {
+    newWindow.close();
+  }
 }
 (<any>mediaQueriesSupported).message = 'MatchMedia';
 
