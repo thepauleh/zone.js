@@ -13,10 +13,10 @@ const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
   return obj;
 }
 
-function supportsMatchMedia() {
-  return 'matchMedia' in window;
+function mediaQueriesSupported() {
+  return (typeof window.matchMedia != 'undefined' || typeof (<any>window).msMatchMedia != 'undefined');
 }
-(<any>supportsMatchMedia).message = 'MatchMedia';
+(<any>mediaQueriesSupported).message = 'MatchMedia';
 
 /*
  * To test MatchMedia Media Queries we need to resize the browser window.
@@ -28,7 +28,7 @@ function supportsMatchMedia() {
  * increases the overall test time.
  */
 
-describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
+describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   let newWindow: Window;
   let testZone: Zone;
