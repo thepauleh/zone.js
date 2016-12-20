@@ -14,7 +14,7 @@ const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
 }
 
 function mediaQueriesSupported() {
-  return 'matchMedia' in window;
+  return 'matchMedia' in window && 'MediaQueryList' in window;
 
 }
 (<any>mediaQueriesSupported).message = 'MatchMedia';
@@ -43,7 +43,9 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       // we set prototype here because the new created window is not
       // patched by zone, and since Firefox 7, we can't resize a window
       // or tab that wasn't created by window.open()
-      setPrototypeOf(mql, MediaQueryList.prototype);
+      if (window['MediaQueryList']) {
+        setPrototypeOf(mql, window['MediaQueryList'].prototype);
+      }
       console.log('after set prototype', mql);
     }
   });
@@ -52,13 +54,21 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     newWindow.close();
   });
 
+  function isValidMql(mql: any) {
+    try {
+      return mql && mql.addListener;
+    } catch (err) {
+      return false;
+    }
+  }
+
   it('should be in the correct zone', function(done) {
     testZone.run(function() {
-      console.log('should be in zone', mql, mql.addListener);
-      if (!mql || !mql.addListener) {
+      if (isValidMql(mql)) {
         done();
         return;
       }
+      console.log('should be in zone', mql, mql.addListener);
       mql.addListener(function() {
         expect(Zone.current).toBe(testZone);
         done();
@@ -69,7 +79,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow adding of a callback', function(done) {
-    if (!mql || !mql.addListener) {
+    if (isValidMql(mql)) {
       done();
       return;
     }
@@ -89,7 +99,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   it('should allow adding of multiple callbacks', function(done){
     console.log('should be in zone', mql, mql.addListener);
-    if (!mql || !mql.addListener) {
+    if (isValidMql(mql)) {
       done();
       return;
     }
@@ -110,7 +120,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of a callback', function(done){
-    if (!mql || !mql.addListener) {
+    if (isValidMql(mql)) {
       done();
       return;
     }
@@ -135,7 +145,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of multiple callbacks', function(done){
-    if (!mql || !mql.addListener) {
+    if (isValidMql(mql)) {
       done();
       return;
     }
@@ -161,7 +171,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should not crash when trying to remove a non registered callback', function(done) {
-    if (!mql || !mql.addListener) {
+    if (isValidMql(mql)) {
       done();
       return;
     }
