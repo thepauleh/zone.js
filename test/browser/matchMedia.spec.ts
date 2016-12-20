@@ -64,7 +64,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   it('should be in the correct zone', function(done) {
     testZone.run(function() {
-      if (isValidMql(mql)) {
+      if (!isValidMql(mql)) {
         done();
         return;
       }
@@ -79,7 +79,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow adding of a callback', function(done) {
-    if (isValidMql(mql)) {
+    if (!isValidMql(mql)) {
       done();
       return;
     }
@@ -99,7 +99,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   it('should allow adding of multiple callbacks', function(done){
     console.log('should be in zone', mql, mql.addListener);
-    if (isValidMql(mql)) {
+    if (!isValidMql(mql)) {
       done();
       return;
     }
@@ -120,7 +120,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of a callback', function(done){
-    if (isValidMql(mql)) {
+    if (!isValidMql(mql)) {
       done();
       return;
     }
@@ -145,7 +145,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of multiple callbacks', function(done){
-    if (isValidMql(mql)) {
+    if (!isValidMql(mql)) {
       done();
       return;
     }
@@ -171,7 +171,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should not crash when trying to remove a non registered callback', function(done) {
-    if (isValidMql(mql)) {
+    if (!isValidMql(mql)) {
       done();
       return;
     }
