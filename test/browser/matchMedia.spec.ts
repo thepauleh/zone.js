@@ -44,6 +44,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       // patched by zone, and since Firefox 7, we can't resize a window
       // or tab that wasn't created by window.open()
       setPrototypeOf(mql, MediaQueryList.prototype);
+      console.log('after set prototype', mql);
     }
   });
 
@@ -53,6 +54,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   it('should be in the correct zone', function(done) {
     testZone.run(function() {
+      console.log('should be in zone', mql, mql.addListener);
       if (!mql || !mql.addListener) {
         done();
         return;
@@ -86,6 +88,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow adding of multiple callbacks', function(done){
+    console.log('should be in zone', mql, mql.addListener);
     if (!mql || !mql.addListener) {
       done();
       return;
