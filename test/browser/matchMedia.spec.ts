@@ -75,7 +75,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       }
       console.log('should be in zone', mql, mql.addListener);
       mql.addListener(function() {
-        expect(Zone.current).toBe(testZone);
+        expect(Zone.current.name).toBe(testZone.name);
         done();
       });
       window.resizeTo(600, 250);
