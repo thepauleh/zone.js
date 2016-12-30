@@ -40,7 +40,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     //window = window.open("","", "width=100, height=100");
     //if (window.matchMedia) {
     originSize = {width: window.innerWidth, height: window.innerHeight};
-    window.resizeTo(100,200);
+    window.resizeTo(200,300);
     console.log('originSize', originSize);
     console.log('currentSize', window.innerWidth, window.innerHeight);
       mql = window.matchMedia("(min-width: 500px)");
@@ -80,10 +80,12 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       }
       console.log('should be in zone', mql, mql.addListener);
       mql.addListener(function() {
+        console.log('enter zone', Zone.current.name);
         expect(Zone.current.name).toBe(testZone.name);
         done();
       });
-      window.resizeTo(600, 250);
+      window.resizeTo(600, 700);
+      console.log('window after resize', window.innerWidth, mql.matches);
     });
   });
 
