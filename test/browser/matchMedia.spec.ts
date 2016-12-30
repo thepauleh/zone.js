@@ -66,7 +66,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
         && window.navigator.appVersion.indexOf('MSIE 10') !== -1) {
         return false;
       }
-      return mql && mql.addListener && window.innerWidth !== originSize.width;
+      return mql && mql.addListener;
     } catch (err) {
       return false;
     }
@@ -84,6 +84,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
         expect(Zone.current.name).toBe(testZone.name);
         done();
       });
+      window.dispatchEvent(new Event('resize'));
       window.resizeTo(600, 700);
       console.log('window after resize', window.innerWidth, mql.matches);
     });
@@ -109,7 +110,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow adding of multiple callbacks', function(done){
-    console.log('should be in zone', mql, mql.addListener);
     if (!isValidMql(mql)) {
       done();
       return;
