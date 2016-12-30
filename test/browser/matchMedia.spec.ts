@@ -100,6 +100,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       log = 'changed';
     });
 
+    window.dispatchEvent(new Event('resize'));
     window.resizeTo(600, 250);
 
     //allow some time for the browser to react to window size change
@@ -123,6 +124,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       log += ';secondchange';
     });
 
+    window.dispatchEvent(new Event('resize'));
     window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('changed;secondchange');
@@ -148,6 +150,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.addListener(callback2);
     mql.removeListener(callback1);
 
+    window.dispatchEvent(new Event('resize'));
     window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback2');
@@ -174,6 +177,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.removeListener(callback1);
     mql.removeListener(callback2);
 
+    window.dispatchEvent(new Event('resize'));
     window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('');
@@ -195,6 +199,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
     mql.removeListener(function() {});
 
+    window.dispatchEvent(new Event('resize'));
     window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback1');
