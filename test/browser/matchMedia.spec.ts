@@ -78,7 +78,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
         expect(Zone.current).toBe(testZone);
         done();
       });
-
       window.resizeTo(600, 250);
     });
   });
