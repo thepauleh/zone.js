@@ -8,16 +8,23 @@
 
 import {ifEnvSupports} from '../test-util';
 
-const setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
-  obj.__proto__ = proto;
-  return obj;
+var setPrototypeOf = (Object as any).setPrototypeOf || function(obj, proto) {
+    obj.__proto__ = proto;
+    return obj;
+  }
+
+function isIE10() {
+  if (window.navigator && window.navigator.appVersion
+    && window.navigator.appVersion.indexOf('MSIE 10') !== -1) {
+    return true;
+  }
+  return false;
 }
 
-function mediaQueriesSupported() {
-  return 'matchMedia' in window && 'MediaQueryList' in window;
-
+function supportsMatchMedia() {
+  return 'matchMedia' in window && !isIE10();
 }
-(<any>mediaQueriesSupported).message = 'MatchMedia';
+(<any>supportsMatchMedia).message = 'MatchMedia';
 
 /*
  * To test MatchMedia Media Queries we need to resize the browser window.
@@ -29,79 +36,44 @@ function mediaQueriesSupported() {
  * increases the overall test time.
  */
 
-describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
+describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
 
+  let newWindow: Window;
   let testZone: Zone;
   let mql: MediaQueryList;
-  let originSize;
 
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
-    //window = window.open("","", "width=100, height=100");
-    //if (window.matchMedia) {
-    originSize = {width: window.innerWidth, height: window.innerHeight};
-    window.resizeTo(200,300);
-    console.log('originSize', originSize);
-    console.log('currentSize', window.innerWidth, window.innerHeight);
-      mql = window.matchMedia("(min-width: 500px)");
-      // we set prototype here because the new created window is not
-      // patched by zone, and since Firefox 7, we can't resize a window
-      // or tab that wasn't created by window.open()
-      //if (window['MediaQueryList']) {
-       // setPrototypeOf(mql, window['MediaQueryList'].prototype);
-      //}
-      //console.log('after set prototype', mql);
-   // }
+    newWindow = window.open("","", "width=100, height=100");
+    mql = newWindow.matchMedia("(min-width: 500px)");
+    // we set prototype here because the new created window is not
+    // patched by zone, and since Firefox 7, we can't resize a window
+    // or tab that wasn't created by window.open()
+    setPrototypeOf(mql, MediaQueryList.prototype);
   });
 
   afterEach(function() {
-    window.resizeTo(originSize.width, originSize.height);
-    window.close();
+    newWindow.close();
   });
-
-  function isValidMql(mql: any) {
-    try {
-      console.log('browser version', window.navigator.appVersion);
-      if (window.navigator && window.navigator.appVersion
-        && window.navigator.appVersion.indexOf('MSIE 10') !== -1) {
-        return false;
-      }
-      return mql && mql.addListener;
-    } catch (err) {
-      return false;
-    }
-  }
 
   it('should be in the correct zone', function(done) {
     testZone.run(function() {
-      if (!isValidMql(mql)) {
-        done();
-        return;
-      }
-      console.log('should be in zone', mql, mql.addListener);
       mql.addListener(function() {
-        console.log('enter zone', Zone.current.name);
-        expect(Zone.current.name).toBe(testZone.name);
+        expect(Zone.current).toBe(testZone);
         done();
       });
-      window.dispatchEvent(new Event('resize'));
-      window.resizeTo(600, 700);
-      console.log('window after resize', window.innerWidth, mql.matches);
+
+      newWindow.resizeTo(600, 250);
     });
   });
 
   it('should allow adding of a callback', function(done) {
-    if (!isValidMql(mql)) {
-      done();
-      return;
-    }
     let log = '';
     mql.addListener(function() {
       log = 'changed';
     });
 
-    window.dispatchEvent(new Event('resize'));
-    window.resizeTo(600, 250);
+    newWindow.resizeTo(600, 250);
 
     //allow some time for the browser to react to window size change
     setTimeout(function() {
@@ -111,10 +83,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow adding of multiple callbacks', function(done){
-    if (!isValidMql(mql)) {
-      done();
-      return;
-    }
     let log = '';
     mql.addListener(function() {
       log = 'changed';
@@ -124,8 +92,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       log += ';secondchange';
     });
 
-    window.dispatchEvent(new Event('resize'));
-    window.resizeTo(600, 250);
+    newWindow.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('changed;secondchange');
       done();
@@ -133,10 +100,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of a callback', function(done){
-    if (!isValidMql(mql)) {
-      done();
-      return;
-    }
     let log = '';
     let callback1 = function() {
       log += 'callback1';
@@ -150,8 +113,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.addListener(callback2);
     mql.removeListener(callback1);
 
-    window.dispatchEvent(new Event('resize'));
-    window.resizeTo(600, 250);
+    newWindow.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback2');
       done();
@@ -159,10 +121,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should allow removal of multiple callbacks', function(done){
-    if (!isValidMql(mql)) {
-      done();
-      return;
-    }
     let log = '';
     let callback1 = function() {
       log += 'callback1';
@@ -177,8 +135,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.removeListener(callback1);
     mql.removeListener(callback2);
 
-    window.dispatchEvent(new Event('resize'));
-    window.resizeTo(600, 250);
+    newWindow.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('');
       done();
@@ -186,10 +143,6 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
   });
 
   it('should not crash when trying to remove a non registered callback', function(done) {
-    if (!isValidMql(mql)) {
-      done();
-      return;
-    }
     let log = '';
     let callback1 = function() {
       log += 'callback1';
@@ -199,8 +152,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
     mql.removeListener(function() {});
 
-    window.dispatchEvent(new Event('resize'));
-    window.resizeTo(600, 250);
+    newWindow.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback1');
       done();
