@@ -61,7 +61,9 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
   function isValidMql(mql: any) {
     try {
-      if (window.navigator && window.navigator.userAgent.toUpperCase().indexOf('MSIE') !== -1) {
+      console.log('browser version', window.navigator.appVersion);
+      if (window.navigator && window.navigator.appVersion
+        && window.navigator.appVersion.indexOf('MSIE 10') !== -1) {
         return false;
       }
       return mql && mql.addListener && window.innerWidth !== originSize.width;
