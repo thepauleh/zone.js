@@ -31,32 +31,37 @@ function mediaQueriesSupported() {
 
 describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
-  let newWindow: Window;
   let testZone: Zone;
   let mql: MediaQueryList;
+  let originSize;
 
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
-    newWindow = window.open("","", "width=100, height=100");
-    if (newWindow.matchMedia) {
-      mql = newWindow.matchMedia("(min-width: 500px)");
+    //window = window.open("","", "width=100, height=100");
+    //if (window.matchMedia) {
+    originSize = {width: window.innerWidth, height: window.innerHeight};
+    window.resizeTo(100,200);
+    console.log('originSize', originSize);
+    console.log('currentSize', window.innerWidth, window.innerHeight);
+      mql = window.matchMedia("(min-width: 500px)");
       // we set prototype here because the new created window is not
       // patched by zone, and since Firefox 7, we can't resize a window
       // or tab that wasn't created by window.open()
-      if (window['MediaQueryList']) {
-        setPrototypeOf(mql, window['MediaQueryList'].prototype);
-      }
-      console.log('after set prototype', mql);
-    }
+      //if (window['MediaQueryList']) {
+       // setPrototypeOf(mql, window['MediaQueryList'].prototype);
+      //}
+      //console.log('after set prototype', mql);
+   // }
   });
 
   afterEach(function() {
-    newWindow.close();
+    window.resizeTo(originSize.width, originSize.height);
+    window.close();
   });
 
   function isValidMql(mql: any) {
     try {
-      return mql && mql.addListener;
+      return mql && mql.addListener && window.innerWidth !== originSize.width;
     } catch (err) {
       return false;
     }
@@ -74,7 +79,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
         done();
       });
 
-      newWindow.resizeTo(600, 250);
+      window.resizeTo(600, 250);
     });
   });
 
@@ -88,7 +93,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       log = 'changed';
     });
 
-    newWindow.resizeTo(600, 250);
+    window.resizeTo(600, 250);
 
     //allow some time for the browser to react to window size change
     setTimeout(function() {
@@ -112,7 +117,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
       log += ';secondchange';
     });
 
-    newWindow.resizeTo(600, 250);
+    window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('changed;secondchange');
       done();
@@ -137,7 +142,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.addListener(callback2);
     mql.removeListener(callback1);
 
-    newWindow.resizeTo(600, 250);
+    window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback2');
       done();
@@ -163,7 +168,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
     mql.removeListener(callback1);
     mql.removeListener(callback2);
 
-    newWindow.resizeTo(600, 250);
+    window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('');
       done();
@@ -184,7 +189,7 @@ describe('MatchMedia', ifEnvSupports(mediaQueriesSupported, function() {
 
     mql.removeListener(function() {});
 
-    newWindow.resizeTo(600, 250);
+    window.resizeTo(600, 250);
     setTimeout(function() {
       expect(log).toEqual('callback1');
       done();
