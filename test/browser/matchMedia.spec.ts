@@ -22,7 +22,7 @@ function isIE10() {
 }
 
 function supportsMatchMedia() {
-  return 'matchMedia' in window && !isIE10();
+  return 'matchMedia' in window && window['MediaQueryList'] && !isIE10();
 }
 (<any>supportsMatchMedia).message = 'MatchMedia';
 
@@ -45,11 +45,11 @@ describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
     newWindow = window.open("","", "width=100, height=100");
+    setPrototypeOf(newWindow['MediaQueryList'], MediaQueryList.prototype);
     mql = newWindow.matchMedia("(min-width: 500px)");
     // we set prototype here because the new created window is not
     // patched by zone, and since Firefox 7, we can't resize a window
     // or tab that wasn't created by window.open()
-    setPrototypeOf(mql, MediaQueryList.prototype);
   });
 
   afterEach(function() {
