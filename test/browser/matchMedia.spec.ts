@@ -44,12 +44,14 @@ describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
 
   beforeEach(function() {
     testZone = Zone.current.fork({name: 'matchMediaTest'});
-    newWindow = window.open("","", "width=100, height=100");
-    setPrototypeOf(newWindow['MediaQueryList'], MediaQueryList.prototype);
-    mql = newWindow.matchMedia("(min-width: 500px)");
+
+    //newWindow = window.open("","", "width=100, height=100");
+    mql = window.matchMedia("(min-width: 500px)");
     // we set prototype here because the new created window is not
     // patched by zone, and since Firefox 7, we can't resize a window
     // or tab that wasn't created by window.open()
+    //setPrototypeOf(newWindow['MediaQueryList'], MediaQueryList.prototype);
+    window.resizeTo(1000,800);
   });
 
   afterEach(function() {
@@ -59,15 +61,16 @@ describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
   it('should be in the correct zone', function(done) {
     testZone.run(function() {
       mql.addListener(function() {
-        expect(Zone.current).toBe(testZone);
+        console.log('enter zone', Zone.current.name);
+        expect(Zone.current.name).toBe(testZone.name);
         done();
       });
 
-      newWindow.resizeTo(600, 250);
+      window.resizeTo(600, 250);
     });
   });
 
-  it('should allow adding of a callback', function(done) {
+  /*it('should allow adding of a callback', function(done) {
     let log = '';
     mql.addListener(function() {
       log = 'changed';
@@ -157,5 +160,5 @@ describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
       expect(log).toEqual('callback1');
       done();
     }, 200);
-  });
+  });*/
 }));
