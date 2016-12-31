@@ -55,7 +55,7 @@ describe('MatchMedia', ifEnvSupports(supportsMatchMedia, function() {
   });
 
   afterEach(function() {
-    newWindow.close();
+    //window.close();
   });
 
   it('should be in the correct zone', function(done) {
