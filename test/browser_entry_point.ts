@@ -22,3 +22,4 @@ import './browser/XMLHttpRequest.spec';
 import './browser/MediaQuery.spec';
 import './mocha-patch.spec';
 import './patch/indexedDB.spec';
+import './jasmine-patch.spec';
