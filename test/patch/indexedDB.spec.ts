@@ -45,21 +45,25 @@ describe(
       describe('IDBRequest', function() {
         it('should bind EventTarget.addEventListener', function(done) {
           testZone.run(function() {
-            db.transaction('test-object-store')
-                .objectStore('test-object-store')
-                .get(1)
-                .addEventListener('success', function(event) {
-                  expect(Zone.current.name).toEqual('testZone');
-                  expect(event.target.result.data).toBe('Test data');
-                  done();
-                });
+            const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
+            Zone.root.run(() => {
+              console.log('IDBRequest', req, req.addEventListener.toString());
+            });
+            req.addEventListener('success', function(event) {
+              expect(Zone.current.name).toEqual('testZone');
+              expect(event.target.result.data).toBe('Test data');
+              done();
+            });
           });
         });
 
         it('should bind onEventType listeners', function(done) {
           testZone.run(function() {
-            db.transaction('test-object-store').objectStore('test-object-store').get(1).onsuccess =
-                function(event) {
+            const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
+            Zone.root.run(() => {
+              console.log('IDBRequest', req, req.onsuccess.toString());
+            });
+            req.onsuccess = function(event) {
               expect(Zone.current.name).toEqual('testZone');
               expect(event.target.result.data).toBe('Test data');
               done();
