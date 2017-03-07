@@ -84,6 +84,9 @@ describe(
               expect(event.target.result.data).toBe('Test data');
               done();
             };
+            Zone.root.run(() => {
+              console.log('IDBRequest', req, req.onsuccess.toString());
+            });
           });
         });
       });
