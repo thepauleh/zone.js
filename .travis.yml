@@ -26,6 +26,7 @@ script:
   - node_modules/.bin/gulp format:enforce
   - node_modules/.bin/gulp build
   - node_modules/.bin/gulp promisetest
+  - ls build/test/patch
   - node_modules/.bin/karma start karma-dist-sauce-jasmine.conf.js --single-run
   - node_modules/.bin/karma start karma-build-sauce-mocha.conf.js --single-run
   - node_modules/.bin/gulp test/node
