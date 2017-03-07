@@ -12,10 +12,13 @@ import {ifEnvSupports} from '../test-util';
 describe(
     'IndexedDB', ifEnvSupports('IDBDatabase', function() {
       const testZone = Zone.current.fork({name: 'testZone'});
+      let idxDB;
       let db;
 
       beforeEach(function(done) {
-        const openRequest = indexedDB.open('_zone_testdb');
+        const w = window as any;
+        idxDB = w.indexedDB || w.webkitIndexedDB || w.mozIndexedDB || w.msIndexedDB || w.OIndexedDB;
+        const openRequest = idxDB.open('_zone_testdb');
         openRequest.onupgradeneeded = function(event) {
           db = event.target['result'];
           const objectStore = db.createObjectStore('test-object-store', {keyPath: 'key'});
@@ -45,7 +48,7 @@ describe(
       afterEach(function(done) {
         db.close();
 
-        const openRequest = indexedDB.deleteDatabase('_zone_testdb');
+        const openRequest = idxDB.deleteDatabase('_zone_testdb');
         openRequest.onsuccess = function(event) {
           done();
         };
@@ -57,7 +60,7 @@ describe(
             console.log('addEventListener test');
           });
           testZone.run(function() {
-            const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
+            const req = db.transaction('test-object-store', 'readwrite').objectStore('test-object-store').get(1);
             Zone.root.run(() => {
               console.log('IDBRequest', req, req.addEventListener.toString());
             });
