@@ -16,7 +16,7 @@ describe(
 
       beforeEach(function(done) {
         const openRequest = indexedDB.open('_zone_testdb');
-        openRequest.onupgradeneeded = function(event) {
+        openRequest.onsuccess = function(event) {
           db = event.target['result'];
           const objectStore = db.createObjectStore('test-object-store', {keyPath: 'key'});
           objectStore.createIndex('key', 'key', {unique: true});
@@ -44,6 +44,9 @@ describe(
 
       describe('IDBRequest', function() {
         it('should bind EventTarget.addEventListener', function(done) {
+          Zone.root.run(() => {
+            console.log('addEventListener test');
+          });
           testZone.run(function() {
             const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
             Zone.root.run(() => {
