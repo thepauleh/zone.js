@@ -16,17 +16,26 @@ describe(
 
       beforeEach(function(done) {
         const openRequest = indexedDB.open('_zone_testdb');
-        openRequest.onsuccess = function(event) {
+        openRequest.onupgradeneeded = function(event) {
           db = event.target['result'];
           const objectStore = db.createObjectStore('test-object-store', {keyPath: 'key'});
           objectStore.createIndex('key', 'key', {unique: true});
           objectStore.createIndex('data', 'data', {unique: false});
+          Zone.root.run(() => {
+            console.log('before Each', objectStore);
+          });
 
           objectStore.transaction.oncomplete = function() {
             const testStore =
                 db.transaction('test-object-store', 'readwrite').objectStore('test-object-store');
+            Zone.root.run(() => {
+              console.log('before Each test', testStore);
+            });
             testStore.add({key: 1, data: 'Test data'});
             testStore.transaction.oncomplete = function() {
+              Zone.root.run(() => {
+                console.log('before Each on complete');
+              });
               done();
             };
           };
