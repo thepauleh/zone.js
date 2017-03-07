@@ -103,10 +103,11 @@ describe(
             Zone.root.run(() => {
               console.log('IDBRequest onsuccess', req, req.onsuccess.toString());
               console.log(
-                'eventListeners handler onsuccess',
-                req['__zone_symbol__eventTasks'][0].data.handler.toString());
+                  'eventListeners handler onsuccess',
+                  req['__zone_symbol__eventTasks'][0].data.handler.toString());
               console.log(
-                'eventListeners eventName onsuccess', req['__zone_symbol__eventTasks'][0].data.eventName);
+                  'eventListeners eventName onsuccess',
+                  req['__zone_symbol__eventTasks'][0].data.eventName);
             });
           });
         });
