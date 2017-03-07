@@ -66,6 +66,13 @@ describe(
               expect(event.target.result.data).toBe('Test data');
               done();
             });
+            req.addEventListener('error', function(event) {
+              expect(Zone.current.name).toEqual('testZone');
+              Zone.root.run(() => {
+                console.log('IDBRequest error', event);
+              });
+              fail('error get indexedDb');
+            });
             Zone.root.run(() => {
               console.log(
                   'eventListeners handler',
