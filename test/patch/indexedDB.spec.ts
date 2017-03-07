@@ -66,7 +66,11 @@ describe(
               expect(event.target.result.data).toBe('Test data');
               done();
             });
+            Zone.root.run(() => {
+              console.log('eventListeners ', req['__zone_symbol__eventTasks']);
+            });
           });
+
         });
 
         it('should bind onEventType listeners', function(done) {
