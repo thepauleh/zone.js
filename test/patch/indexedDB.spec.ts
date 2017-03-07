@@ -60,7 +60,9 @@ describe(
             console.log('addEventListener test');
           });
           testZone.run(function() {
-            const req = db.transaction('test-object-store', 'readwrite').objectStore('test-object-store').get(1);
+            const req = db.transaction('test-object-store', 'readwrite')
+                            .objectStore('test-object-store')
+                            .get(1);
             Zone.root.run(() => {
               console.log('IDBRequest', req, req.addEventListener.toString());
             });
