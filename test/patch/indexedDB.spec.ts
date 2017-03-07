@@ -68,8 +68,8 @@ describe(
             });
             Zone.root.run(() => {
               console.log(
-                  'eventListeners ', req['__zone_symbol__eventTasks'][0].data.handler.toString());
-              console.log('eventListeners ', req['__zone_symbol__eventTasks'][0].data.eventName);
+                  'eventListeners handler', req['__zone_symbol__eventTasks'][0].data.handler.toString());
+              console.log('eventListeners eventName ', req['__zone_symbol__eventTasks'][0].data.eventName);
             });
           });
 
