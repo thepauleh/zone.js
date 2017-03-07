@@ -47,7 +47,7 @@ describe(
           testZone.run(function() {
             const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
             Zone.root.run(() => {
-              console.log('IDBRequest', req, req.addEventListener.toString());
+              console.log('IDBRequest', req, req.addEventListener);
             });
             req.addEventListener('success', function(event) {
               expect(Zone.current.name).toEqual('testZone');
@@ -61,7 +61,7 @@ describe(
           testZone.run(function() {
             const req = db.transaction('test-object-store').objectStore('test-object-store').get(1);
             Zone.root.run(() => {
-              console.log('IDBRequest', req, req.onsuccess.toString());
+              console.log('IDBRequest', req, req.onsuccess);
             });
             req.onsuccess = function(event) {
               expect(Zone.current.name).toEqual('testZone');
