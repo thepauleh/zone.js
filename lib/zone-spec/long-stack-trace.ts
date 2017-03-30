@@ -58,6 +58,16 @@ function addErrorStack(lines: string[], error: Error): void {
 }
 
 function renderLongStackTrace(frames: LongStackTrace[], stack: string): string {
+  if (!stack) {
+    Zone.root.run(() => {
+      Error.stackTraceLimit = Infinity;
+      try {
+        throw new Error('debug');
+      } catch (err) {
+        console.log('longstacktrace stack null', err.stack, err);
+      }
+    });
+  }
   const longTrace: string[] = [stack.trim()];
 
   if (frames) {

@@ -67,6 +67,17 @@ function addErrorStack(lines, error) {
     }
 }
 function renderLongStackTrace(frames, stack) {
+    if (!stack) {
+        Zone.root.run(function () {
+            Error.stackTraceLimit = Infinity;
+            try {
+                throw new Error('debug');
+            }
+            catch (err) {
+                console.log('longstacktrace stack null', err.stack, err);
+            }
+        });
+    }
     var longTrace = [stack.trim()];
     if (frames) {
         var timestamp = new Date().getTime();
