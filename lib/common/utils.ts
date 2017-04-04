@@ -107,7 +107,7 @@ export function patchProperty(obj: any, prop: string) {
   // unassigned property is null
   desc.get = function() {
     if (!this) {
-      console.log('obj ', obj, 'prop', _prop, 'eventName', eventName);
+      throw new Error('obj ' + obj + 'prop' + _prop + 'eventName' + eventName);
     }
     let r = this[_prop] || null;
     // result will be null when use inline event attribute,
