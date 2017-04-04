@@ -1214,6 +1214,9 @@ function patchProperty(obj, prop) {
     // The getter would return undefined for unassigned properties but the default value of an
     // unassigned property is null
     desc.get = function () {
+        if (!this) {
+            throw new Error('obj ' + obj + 'prop' + _prop + 'eventName' + eventName);
+        }
         var r = this[_prop] || null;
         // result will be null when use inline event attribute,
         // such as <button onclick="func();">OK</button>
