@@ -16,7 +16,7 @@ declare const WorkerGlobalScope: any;
 
 export const zoneSymbol: (name: string) => string = (n) => `__zone_symbol__${n}`;
 const _global: any =
-    typeof window === 'object' && window || typeof self === 'object' && self || global;
+  typeof window === 'object' && window || typeof self === 'object' && self || global;
 
 export function bindArguments(args: any[], source: string): any[] {
   for (let i = args.length - 1; i >= 0; i--) {
@@ -45,19 +45,19 @@ export function patchPrototype(prototype: any, fnNames: string[]) {
 }
 
 export const isWebWorker: boolean =
-    (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope);
+  (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope);
 
 export const isNode: boolean =
-    (!('nw' in _global) && typeof process !== 'undefined' &&
-     {}.toString.call(process) === '[object process]');
+  (!('nw' in _global) && typeof process !== 'undefined' &&
+  {}.toString.call(process) === '[object process]');
 
 export const isBrowser: boolean =
-    !isNode && !isWebWorker && !!(typeof window !== 'undefined' && (window as any)['HTMLElement']);
+  !isNode && !isWebWorker && !!(typeof window !== 'undefined' && (window as any)['HTMLElement']);
 
 // we are in electron of nw, so we are both browser and nodejs
 export const isMix: boolean = typeof process !== 'undefined' &&
-    {}.toString.call(process) === '[object process]' && !isWebWorker &&
-    !!(typeof window !== 'undefined' && (window as any)['HTMLElement']);
+  {}.toString.call(process) === '[object process]' && !isWebWorker &&
+  !!(typeof window !== 'undefined' && (window as any)['HTMLElement']);
 
 export function patchProperty(obj: any, prop: string) {
   const desc = Object.getOwnPropertyDescriptor(obj, prop) || {enumerable: true, configurable: true};
@@ -65,7 +65,7 @@ export function patchProperty(obj: any, prop: string) {
   const originalDesc = Object.getOwnPropertyDescriptor(obj, 'original' + prop);
   if (!originalDesc && desc.get) {
     Object.defineProperty(
-        obj, 'original' + prop, {enumerable: false, configurable: true, get: desc.get});
+      obj, 'original' + prop, {enumerable: false, configurable: true, get: desc.get});
   }
 
   // A property descriptor cannot have getter/setter and be writable
@@ -81,8 +81,17 @@ export function patchProperty(obj: any, prop: string) {
   const _prop = zoneSymbol('_' + prop);
 
   desc.set = function(fn) {
-    if (this[_prop]) {
-      this.removeEventListener(eventName, this[_prop]);
+    // in some of windows's onproperty callback, this is undefined
+    // so we need to check it
+    let target = this;
+    if (!target && obj === _global) {
+      target = _global;
+    }
+    if (!target) {
+      return;
+    }
+    if (target[_prop]) {
+      target.removeEventListener(eventName, target[_prop]);
     }
 
     if (typeof fn === 'function') {
@@ -96,20 +105,26 @@ export function patchProperty(obj: any, prop: string) {
         return result;
       };
 
-      this[_prop] = wrapFn;
-      this.addEventListener(eventName, wrapFn, false);
+      target[_prop] = wrapFn;
+      target.addEventListener(eventName, wrapFn, false);
     } else {
-      this[_prop] = null;
+      target[_prop] = null;
     }
   };
 
   // The getter would return undefined for unassigned properties but the default value of an
   // unassigned property is null
   desc.get = function() {
-    if (!this) {
-      throw new Error('obj ' + obj + 'prop' + _prop + 'eventName' + eventName);
+    // in some of windows's onproperty callback, this is undefined
+    // so we need to check it
+    let target = this;
+    if (!target && obj === _global) {
+      target = _global;
     }
-    let r = this[_prop] || null;
+    if (!target) {
+      return null;
+    }
+    let r = target[_prop] || null;
     // result will be null when use inline event attribute,
     // such as <button onclick="func();">OK</button>
     // because the onclick function is internal raw uncompiled handler
@@ -121,13 +136,13 @@ export function patchProperty(obj: any, prop: string) {
         r = originalDesc.get.apply(this, arguments);
         if (r) {
           desc.set.apply(this, [r]);
-          if (typeof this['removeAttribute'] === 'function') {
-            this.removeAttribute(prop);
+          if (typeof target['removeAttribute'] === 'function') {
+            target.removeAttribute(prop);
           }
         }
       }
     }
-    return this[_prop] || null;
+    return target[_prop] || null;
   };
 
   Object.defineProperty(obj, prop, desc);
@@ -159,7 +174,7 @@ const REMOVE_EVENT_LISTENER = 'removeEventListener';
 export interface NestedEventListener { listener?: EventListenerOrEventListenerObject; }
 
 export declare type NestedEventListenerOrEventListenerObject =
-    NestedEventListener | EventListener | EventListenerObject;
+  NestedEventListener | EventListener | EventListenerObject;
 
 export interface ListenerTaskMeta extends TaskData {
   useCapturing: boolean;
@@ -169,11 +184,11 @@ export interface ListenerTaskMeta extends TaskData {
   name: string;
   invokeAddFunc: (addFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) => any;
   invokeRemoveFunc:
-      (removeFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) => any;
+    (removeFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) => any;
 }
 
 function findExistingRegisteredTask(
-    target: any, handler: any, name: string, capture: boolean, remove: boolean): Task {
+  target: any, handler: any, name: string, capture: boolean, remove: boolean): Task {
   const eventTasks: Task[] = target[EVENT_TASKS];
   if (eventTasks) {
     for (let i = 0; i < eventTasks.length; i++) {
@@ -181,7 +196,7 @@ function findExistingRegisteredTask(
       const data = <ListenerTaskMeta>eventTask.data;
       const listener = <NestedEventListener>data.handler;
       if ((data.handler === handler || listener.listener === handler) &&
-          data.useCapturing === capture && data.eventName === name) {
+        data.useCapturing === capture && data.eventName === name) {
         if (remove) {
           eventTasks.splice(i, 1);
         }
@@ -193,7 +208,7 @@ function findExistingRegisteredTask(
 }
 
 function findAllExistingRegisteredTasks(
-    target: any, name: string, capture: boolean, remove: boolean): Task[] {
+  target: any, name: string, capture: boolean, remove: boolean): Task[] {
   const eventTasks: Task[] = target[EVENT_TASKS];
   if (eventTasks) {
     const result = [];
@@ -232,7 +247,7 @@ const defaultListenerMetaCreator = (self: any, args: any[]) => {
     target: self || _global,
     name: args[0],
     invokeAddFunc: function(
-        addFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) {
+      addFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) {
       if (delegate && (<Task>delegate).invoke) {
         return this.target[addFnSymbol](this.eventName, (<Task>delegate).invoke, this.useCapturing);
       } else {
@@ -240,10 +255,10 @@ const defaultListenerMetaCreator = (self: any, args: any[]) => {
       }
     },
     invokeRemoveFunc: function(
-        removeFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) {
+      removeFnSymbol: any, delegate: Task|NestedEventListenerOrEventListenerObject) {
       if (delegate && (<Task>delegate).invoke) {
         return this.target[removeFnSymbol](
-            this.eventName, (<Task>delegate).invoke, this.useCapturing);
+          this.eventName, (<Task>delegate).invoke, this.useCapturing);
       } else {
         return this.target[removeFnSymbol](this.eventName, delegate, this.useCapturing);
       }
@@ -252,9 +267,9 @@ const defaultListenerMetaCreator = (self: any, args: any[]) => {
 };
 
 export function makeZoneAwareAddListener(
-    addFnName: string, removeFnName: string, useCapturingParam: boolean = true,
-    allowDuplicates: boolean = false, isPrepend: boolean = false,
-    metaCreator: (self: any, args: any[]) => ListenerTaskMeta = defaultListenerMetaCreator) {
+  addFnName: string, removeFnName: string, useCapturingParam: boolean = true,
+  allowDuplicates: boolean = false, isPrepend: boolean = false,
+  metaCreator: (self: any, args: any[]) => ListenerTaskMeta = defaultListenerMetaCreator) {
   const addFnSymbol = zoneSymbol(addFnName);
   const removeFnSymbol = zoneSymbol(removeFnName);
   const defaultUseCapturing = useCapturingParam ? false : undefined;
@@ -268,7 +283,7 @@ export function makeZoneAwareAddListener(
   function cancelEventListener(eventTask: Task): void {
     const meta = <ListenerTaskMeta>eventTask.data;
     findExistingRegisteredTask(
-        meta.target, eventTask.invoke, meta.eventName, meta.useCapturing, true);
+      meta.target, eventTask.invoke, meta.eventName, meta.useCapturing, true);
     return meta.invokeRemoveFunc(removeFnSymbol, eventTask);
   }
 
@@ -303,7 +318,7 @@ export function makeZoneAwareAddListener(
 
     if (!allowDuplicates) {
       const eventTask: Task = findExistingRegisteredTask(
-          data.target, data.handler, data.eventName, data.useCapturing, false);
+        data.target, data.handler, data.eventName, data.useCapturing, false);
       if (eventTask) {
         // we already registered, so this will have noop.
         return data.invokeAddFunc(addFnSymbol, eventTask);
@@ -318,8 +333,8 @@ export function makeZoneAwareAddListener(
 }
 
 export function makeZoneAwareRemoveListener(
-    fnName: string, useCapturingParam: boolean = true,
-    metaCreator: (self: any, args: any[]) => ListenerTaskMeta = defaultListenerMetaCreator) {
+  fnName: string, useCapturingParam: boolean = true,
+  metaCreator: (self: any, args: any[]) => ListenerTaskMeta = defaultListenerMetaCreator) {
   const symbol = zoneSymbol(fnName);
   const defaultUseCapturing = useCapturingParam ? false : undefined;
 
@@ -330,7 +345,7 @@ export function makeZoneAwareRemoveListener(
     // - When `addEventListener` is called on the global context in strict mode, `this` is undefined
     // see https://github.com/angular/zone.js/issues/190
     const eventTask = findExistingRegisteredTask(
-        data.target, data.handler, data.eventName, data.useCapturing, true);
+      data.target, data.handler, data.eventName, data.useCapturing, true);
     if (eventTask) {
       eventTask.zone.cancelTask(eventTask);
     } else {
@@ -375,25 +390,25 @@ export function makeZoneAwareListeners(fnName: string) {
       return [];
     }
     return target[EVENT_TASKS]
-        .filter((task: Task) => (task.data as any)['eventName'] === eventName)
-        .map((task: Task) => (task.data as any)['handler']);
+      .filter((task: Task) => (task.data as any)['eventName'] === eventName)
+      .map((task: Task) => (task.data as any)['handler']);
   };
 }
 
 const zoneAwareAddEventListener =
-    makeZoneAwareAddListener(ADD_EVENT_LISTENER, REMOVE_EVENT_LISTENER);
+  makeZoneAwareAddListener(ADD_EVENT_LISTENER, REMOVE_EVENT_LISTENER);
 const zoneAwareRemoveEventListener = makeZoneAwareRemoveListener(REMOVE_EVENT_LISTENER);
 
 export function patchEventTargetMethods(
-    obj: any, addFnName: string = ADD_EVENT_LISTENER, removeFnName: string = REMOVE_EVENT_LISTENER,
-    metaCreator: (self: any, args: any[]) => ListenerTaskMeta =
-        defaultListenerMetaCreator): boolean {
+  obj: any, addFnName: string = ADD_EVENT_LISTENER, removeFnName: string = REMOVE_EVENT_LISTENER,
+  metaCreator: (self: any, args: any[]) => ListenerTaskMeta =
+    defaultListenerMetaCreator): boolean {
   if (obj && obj[addFnName]) {
     patchMethod(
-        obj, addFnName,
-        () => makeZoneAwareAddListener(addFnName, removeFnName, true, false, false, metaCreator));
+      obj, addFnName,
+      () => makeZoneAwareAddListener(addFnName, removeFnName, true, false, false, metaCreator));
     patchMethod(
-        obj, removeFnName, () => makeZoneAwareRemoveListener(removeFnName, true, metaCreator));
+      obj, removeFnName, () => makeZoneAwareRemoveListener(removeFnName, true, metaCreator));
     return true;
   } else {
     return false;
@@ -486,9 +501,9 @@ export function createNamedFn(name: string, delegate: (self: any, args: any[]) =
 }
 
 export function patchMethod(
-    target: any, name: string,
-    patchFn: (delegate: Function, delegateName: string, name: string) => (self: any, args: any[]) =>
-        any): Function {
+  target: any, name: string,
+  patchFn: (delegate: Function, delegateName: string, name: string) => (self: any, args: any[]) =>
+    any): Function {
   let proto = target;
   while (proto && Object.getOwnPropertyNames(proto).indexOf(name) === -1) {
     proto = Object.getPrototypeOf(proto);
@@ -516,7 +531,7 @@ export interface MacroTaskMeta extends TaskData {
 
 // TODO: @JiaLiPassion, support cancel task later if necessary
 export function patchMacroTask(
-    obj: any, funcName: string, metaCreator: (self: any, args: any[]) => MacroTaskMeta) {
+  obj: any, funcName: string, metaCreator: (self: any, args: any[]) => MacroTaskMeta) {
   let setNative: Function = null;
 
   function scheduleTask(task: Task) {
@@ -532,7 +547,7 @@ export function patchMacroTask(
     const meta = metaCreator(self, args);
     if (meta.callbackIndex >= 0 && typeof args[meta.callbackIndex] === 'function') {
       const task = Zone.current.scheduleMacroTask(
-          meta.name, args[meta.callbackIndex], meta, scheduleTask, null);
+        meta.name, args[meta.callbackIndex], meta, scheduleTask, null);
       return task;
     } else {
       // cause an error by calling it directly.
@@ -549,7 +564,7 @@ export interface MicroTaskMeta extends TaskData {
 }
 
 export function patchMicroTask(
-    obj: any, funcName: string, metaCreator: (self: any, args: any[]) => MicroTaskMeta) {
+  obj: any, funcName: string, metaCreator: (self: any, args: any[]) => MicroTaskMeta) {
   let setNative: Function = null;
 
   function scheduleTask(task: Task) {
@@ -565,7 +580,7 @@ export function patchMicroTask(
     const meta = metaCreator(self, args);
     if (meta.callbackIndex >= 0 && typeof args[meta.callbackIndex] === 'function') {
       const task =
-          Zone.current.scheduleMicroTask(meta.name, args[meta.callbackIndex], meta, scheduleTask);
+        Zone.current.scheduleMicroTask(meta.name, args[meta.callbackIndex], meta, scheduleTask);
       return task;
     } else {
       // cause an error by calling it directly.

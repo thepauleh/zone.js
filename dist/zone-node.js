@@ -1167,8 +1167,17 @@ function patchProperty(obj, prop) {
     var eventName = prop.substr(2);
     var _prop = zoneSymbol('_' + prop);
     desc.set = function (fn) {
-        if (this[_prop]) {
-            this.removeEventListener(eventName, this[_prop]);
+        // in some of windows's onproperty callback, this is undefined
+        // so we need to check it
+        var target = this;
+        if (!target && obj === _global$1) {
+            target = _global$1;
+        }
+        if (!target) {
+            return;
+        }
+        if (target[_prop]) {
+            target.removeEventListener(eventName, target[_prop]);
         }
         if (typeof fn === 'function') {
             var wrapFn = function (event) {
@@ -1179,20 +1188,26 @@ function patchProperty(obj, prop) {
                 }
                 return result;
             };
-            this[_prop] = wrapFn;
-            this.addEventListener(eventName, wrapFn, false);
+            target[_prop] = wrapFn;
+            target.addEventListener(eventName, wrapFn, false);
         }
         else {
-            this[_prop] = null;
+            target[_prop] = null;
         }
     };
     // The getter would return undefined for unassigned properties but the default value of an
     // unassigned property is null
     desc.get = function () {
-        if (!this) {
-            throw new Error('obj ' + obj + 'prop' + _prop + 'eventName' + eventName);
+        // in some of windows's onproperty callback, this is undefined
+        // so we need to check it
+        var target = this;
+        if (!target && obj === _global$1) {
+            target = _global$1;
         }
-        var r = this[_prop] || null;
+        if (!target) {
+            return null;
+        }
+        var r = target[_prop] || null;
         // result will be null when use inline event attribute,
         // such as <button onclick="func();">OK</button>
         // because the onclick function is internal raw uncompiled handler
@@ -1204,13 +1219,13 @@ function patchProperty(obj, prop) {
                 r = originalDesc.get.apply(this, arguments);
                 if (r) {
                     desc.set.apply(this, [r]);
-                    if (typeof this['removeAttribute'] === 'function') {
-                        this.removeAttribute(prop);
+                    if (typeof target['removeAttribute'] === 'function') {
+                        target.removeAttribute(prop);
                     }
                 }
             }
         }
-        return this[_prop] || null;
+        return target[_prop] || null;
     };
     Object.defineProperty(obj, prop, desc);
 }
