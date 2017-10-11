@@ -15,6 +15,7 @@
 // node test/webdriver/test.js
 
 // testcase1: removeEventHandler in firefox cross site context
+// testtest
 const webdriver = require('selenium-webdriver');
 const capabilities = webdriver.Capabilities.firefox();
 const driver = new webdriver.Builder().usingServer('http://localhost:4444/wd/hub').withCapabilities(capabilities).build();
