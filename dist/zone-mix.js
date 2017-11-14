@@ -631,7 +631,12 @@ var Zone$1 = (function (global) {
         patchOnProperties: noop,
         patchMethod: function () { return noop; },
         setNativePromise: function (NativePromise) {
-            nativeMicroTaskQueuePromise = NativePromise.resolve(0);
+            // sometimes NativePromise.resolve static function
+            // is not ready yet, (such as core-js/es6.promise)
+            // so we need to check here.
+            if (NativePromise && typeof NativePromise.resolve === FUNCTION) {
+                nativeMicroTaskQueuePromise = NativePromise.resolve(0);
+            }
         },
     };
     var _currentZoneFrame = { parent: null, zone: new Zone(null, null) };
@@ -645,22 +650,6 @@ var Zone$1 = (function (global) {
     return global['Zone'] = Zone;
 })(typeof window !== 'undefined' && window || typeof self !== 'undefined' && self || global);
 
-var __read = (undefined && undefined.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
 var __values = (undefined && undefined.__values) || function (o) {
     var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
     if (m) return m.call(o);
@@ -906,8 +895,8 @@ Zone.__load_patch('ZoneAwarePromise', function (global, Zone, api) {
             var resolve;
             var reject;
             var promise = new this(function (res, rej) {
-                _a = __read([res, rej], 2), resolve = _a[0], reject = _a[1];
-                var _a;
+                resolve = res;
+                reject = rej;
             });
             function onResolve(value) {
                 promise && (promise = null || resolve(value));
@@ -1502,26 +1491,6 @@ Zone.__load_patch('toString', function (global, Zone, api) {
  * @fileoverview
  * @suppress {missingRequire}
  */
-var __read$1 = (undefined && undefined.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __spread = (undefined && undefined.__spread) || function () {
-    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read$1(arguments[i]));
-    return ar;
-};
 var TRUE_STR = 'true';
 var FALSE_STR = 'false';
 // an identifier to tell ZoneTask do not create a new invoke closure
@@ -1758,7 +1727,6 @@ function patchEventTarget(_global, apis, patchOptions) {
             if (prepend === void 0) { prepend = false; }
             return function () {
                 var target = this || _global;
-                var targetZone = Zone.current;
                 var delegate = arguments[1];
                 if (!delegate) {
                     return nativeListener.apply(this, arguments);
@@ -1913,7 +1881,6 @@ function patchEventTarget(_global, apis, patchOptions) {
             if (existingTasks) {
                 for (var i = 0; i < existingTasks.length; i++) {
                     var existingTask = existingTasks[i];
-                    var typeOfDelegate = typeof delegate;
                     if (compare(existingTask, delegate)) {
                         existingTasks.splice(i, 1);
                         // set isRemoved to data for faster invokeTask check
@@ -1970,7 +1937,7 @@ function patchEventTarget(_global, apis, patchOptions) {
                     var tasks = target[symbolEventName];
                     var captureTasks = target[symbolCaptureEventName];
                     if (tasks) {
-                        var removeTasks = __spread(tasks);
+                        var removeTasks = tasks.slice();
                         for (var i = 0; i < removeTasks.length; i++) {
                             var task = removeTasks[i];
                             var delegate = task.originalDelegate ? task.originalDelegate : task.callback;
@@ -1978,7 +1945,7 @@ function patchEventTarget(_global, apis, patchOptions) {
                         }
                     }
                     if (captureTasks) {
-                        var removeTasks = __spread(captureTasks);
+                        var removeTasks = captureTasks.slice();
                         for (var i = 0; i < removeTasks.length; i++) {
                             var task = removeTasks[i];
                             var delegate = task.originalDelegate ? task.originalDelegate : task.callback;
@@ -3044,13 +3011,6 @@ Zone.__load_patch('PromiseRejectionEvent', function (global, Zone, api) {
  * found in the LICENSE file at https://angular.io/license
  */
 Zone.__load_patch('EventEmitter', function (global, Zone, api) {
-    var callAndReturnFirstParam = function (fn) {
-        return function (self, args) {
-            fn(self, args);
-            return self;
-        };
-    };
-    // For EventEmitter
     var EE_ADD_LISTENER = 'addListener';
     var EE_PREPEND_LISTENER = 'prependListener';
     var EE_REMOVE_LISTENER = 'removeListener';
