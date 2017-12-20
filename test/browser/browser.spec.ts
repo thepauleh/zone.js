@@ -215,8 +215,11 @@ describe('Zone', function() {
             const testTarget = new TestTarget();
             Zone.current.fork({name: 'test'}).run(() => {
               expect(testTarget.onprop3).toBeTruthy();
+              const newProp3Handler = function() {};
+              testTarget.onprop3 = newProp3Handler;
+              expect(testTarget.onprop3).toBe(newProp3Handler);
               testTarget.onprop3 = null;
-              expect(testTarget.onprop3).toBeNull();
+              expect(!testTarget.onprop3).toBeTruthy();
               testTarget.onprop3 = function() {
                 // onprop1 should not be patched
                 expect(Zone.current.name).toEqual('test');

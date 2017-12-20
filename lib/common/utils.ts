@@ -21,6 +21,7 @@ const _global: any =
 const FUNCTION = 'function';
 const UNDEFINED = 'undefined';
 const REMOVE_ATTRIBUTE = 'removeAttribute';
+const NULL_ON_PROP_VALUE: any[] = [null];
 
 export function bindArguments(args: any[], source: string): any[] {
   for (let i = args.length - 1; i >= 0; i--) {
@@ -156,6 +157,12 @@ export function patchProperty(obj: any, prop: string, prototype?: any) {
     let previousValue = target[eventNameSymbol];
     if (previousValue) {
       target.removeEventListener(eventName, wrapFn);
+    }
+
+    // issue #978, when onload handler was added before loading zone.js
+    // we should remove it with originalDescSet
+    if (originalDescSet) {
+      originalDescSet.apply(target, NULL_ON_PROP_VALUE);
     }
 
     if (typeof newValue === 'function') {
