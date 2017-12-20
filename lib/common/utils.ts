@@ -133,6 +133,7 @@ export function patchProperty(obj: any, prop: string, prototype?: any) {
   delete desc.writable;
   delete desc.value;
   const originalDescGet = desc.get;
+  const originalDescSet = desc.set;
 
   // substr(2) cuz 'onclick' -> 'click', etc
   const eventName = prop.substr(2);
@@ -162,6 +163,11 @@ export function patchProperty(obj: any, prop: string, prototype?: any) {
       target.addEventListener(eventName, wrapFn, false);
     } else {
       target[eventNameSymbol] = null;
+      // issue #978, when onload handler was added before loading zone.js
+      // we should remove it with originalDescSet
+      if (originalDescSet) {
+        originalDescSet.apply(target, [null]);
+      }
     }
   };
 
