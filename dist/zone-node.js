@@ -630,8 +630,14 @@ var Zone$1 = (function (global) {
         patchEventTarget: function () { return []; },
         patchOnProperties: noop,
         patchMethod: function () { return noop; },
+        patchArguments: function () { return noop; },
         setNativePromise: function (NativePromise) {
-            nativeMicroTaskQueuePromise = NativePromise.resolve(0);
+            // sometimes NativePromise.resolve static function
+            // is not ready yet, (such as core-js/es6.promise)
+            // so we need to check here.
+            if (NativePromise && typeof NativePromise.resolve === FUNCTION) {
+                nativeMicroTaskQueuePromise = NativePromise.resolve(0);
+            }
         },
     };
     var _currentZoneFrame = { parent: null, zone: new Zone(null, null) };
@@ -645,32 +651,6 @@ var Zone$1 = (function (global) {
     return global['Zone'] = Zone;
 })(typeof window !== 'undefined' && window || typeof self !== 'undefined' && self || global);
 
-var __read = (undefined && undefined.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __values = (undefined && undefined.__values) || function (o) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
-    if (m) return m.call(o);
-    return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-};
 /**
  * @license
  * Copyright Google Inc. All Rights Reserved.
@@ -906,8 +886,8 @@ Zone.__load_patch('ZoneAwarePromise', function (global, Zone, api) {
             var resolve;
             var reject;
             var promise = new this(function (res, rej) {
-                _a = __read([res, rej], 2), resolve = _a[0], reject = _a[1];
-                var _a;
+                resolve = res;
+                reject = rej;
             });
             function onResolve(value) {
                 promise && (promise = null || resolve(value));
@@ -915,24 +895,14 @@ Zone.__load_patch('ZoneAwarePromise', function (global, Zone, api) {
             function onReject(error) {
                 promise && (promise = null || reject(error));
             }
-            try {
-                for (var values_1 = __values(values), values_1_1 = values_1.next(); !values_1_1.done; values_1_1 = values_1.next()) {
-                    var value = values_1_1.value;
-                    if (!isThenable(value)) {
-                        value = this.resolve(value);
-                    }
-                    value.then(onResolve, onReject);
+            for (var _i = 0, values_1 = values; _i < values_1.length; _i++) {
+                var value = values_1[_i];
+                if (!isThenable(value)) {
+                    value = this.resolve(value);
                 }
-            }
-            catch (e_1_1) { e_1 = { error: e_1_1 }; }
-            finally {
-                try {
-                    if (values_1_1 && !values_1_1.done && (_a = values_1.return)) _a.call(values_1);
-                }
-                finally { if (e_1) throw e_1.error; }
+                value.then(onResolve, onReject);
             }
             return promise;
-            var e_1, _a;
         };
         ZoneAwarePromise.all = function (values) {
             var resolve;
@@ -943,33 +913,23 @@ Zone.__load_patch('ZoneAwarePromise', function (global, Zone, api) {
             });
             var count = 0;
             var resolvedValues = [];
-            try {
-                for (var values_2 = __values(values), values_2_1 = values_2.next(); !values_2_1.done; values_2_1 = values_2.next()) {
-                    var value = values_2_1.value;
-                    if (!isThenable(value)) {
-                        value = this.resolve(value);
+            for (var _i = 0, values_2 = values; _i < values_2.length; _i++) {
+                var value = values_2[_i];
+                if (!isThenable(value)) {
+                    value = this.resolve(value);
+                }
+                value.then((function (index) { return function (value) {
+                    resolvedValues[index] = value;
+                    count--;
+                    if (!count) {
+                        resolve(resolvedValues);
                     }
-                    value.then((function (index) { return function (value) {
-                        resolvedValues[index] = value;
-                        count--;
-                        if (!count) {
-                            resolve(resolvedValues);
-                        }
-                    }; })(count), reject);
-                    count++;
-                }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (values_2_1 && !values_2_1.done && (_a = values_2.return)) _a.call(values_2);
-                }
-                finally { if (e_2) throw e_2.error; }
+                }; })(count), reject);
+                count++;
             }
             if (!count)
                 resolve(resolvedValues);
             return promise;
-            var e_2, _a;
         };
         ZoneAwarePromise.prototype.then = function (onFulfilled, onRejected) {
             var chainPromise = new this.constructor(null);
@@ -1093,7 +1053,20 @@ var zoneSymbol = Zone.__symbol__;
 var _global = typeof window === 'object' && window || typeof self === 'object' && self || global;
 var FUNCTION = 'function';
 var UNDEFINED = 'undefined';
-
+var REMOVE_ATTRIBUTE = 'removeAttribute';
+function bindArguments(args, source) {
+    for (var i = args.length - 1; i >= 0; i--) {
+        if (typeof args[i] === FUNCTION) {
+            args[i] = Zone.current.wrap(args[i], source + '_' + i);
+        }
+    }
+    return args;
+}
+function patchArguments(target, name, source) {
+    return patchMethod(target, name, function (delegate, delegateName, name) { return function (self, args) {
+        return delegate && delegate.apply(self, bindArguments(args, source));
+    }; });
+}
 
 function isPropertyWritable(propertyDesc) {
     if (!propertyDesc) {
@@ -1119,8 +1092,130 @@ var isNode = (!('nw' in _global) && typeof _global.process !== 'undefined' &&
 var isMix = typeof _global.process !== 'undefined' &&
     {}.toString.call(_global.process) === '[object process]' && !isWebWorker &&
     !!(typeof window !== 'undefined' && window['HTMLElement']);
-
-
+var zoneSymbolEventNames = {};
+var wrapFn = function (event) {
+    // https://github.com/angular/zone.js/issues/911, in IE, sometimes
+    // event will be undefined, so we need to use window.event
+    event = event || _global.event;
+    if (!event) {
+        return;
+    }
+    var eventNameSymbol = zoneSymbolEventNames[event.type];
+    if (!eventNameSymbol) {
+        eventNameSymbol = zoneSymbolEventNames[event.type] = zoneSymbol('ON_PROPERTY' + event.type);
+    }
+    var target = this || event.target || _global;
+    var listener = target[eventNameSymbol];
+    var result = listener && listener.apply(this, arguments);
+    if (result != undefined && !result) {
+        event.preventDefault();
+    }
+    return result;
+};
+function patchProperty(obj, prop, prototype) {
+    var desc = Object.getOwnPropertyDescriptor(obj, prop);
+    if (!desc && prototype) {
+        // when patch window object, use prototype to check prop exist or not
+        var prototypeDesc = Object.getOwnPropertyDescriptor(prototype, prop);
+        if (prototypeDesc) {
+            desc = { enumerable: true, configurable: true };
+        }
+    }
+    // if the descriptor not exists or is not configurable
+    // just return
+    if (!desc || !desc.configurable) {
+        return;
+    }
+    // A property descriptor cannot have getter/setter and be writable
+    // deleting the writable and value properties avoids this error:
+    //
+    // TypeError: property descriptors must not specify a value or be writable when a
+    // getter or setter has been specified
+    delete desc.writable;
+    delete desc.value;
+    var originalDescGet = desc.get;
+    // substr(2) cuz 'onclick' -> 'click', etc
+    var eventName = prop.substr(2);
+    var eventNameSymbol = zoneSymbolEventNames[eventName];
+    if (!eventNameSymbol) {
+        eventNameSymbol = zoneSymbolEventNames[eventName] = zoneSymbol('ON_PROPERTY' + eventName);
+    }
+    desc.set = function (newValue) {
+        // in some of windows's onproperty callback, this is undefined
+        // so we need to check it
+        var target = this;
+        if (!target && obj === _global) {
+            target = _global;
+        }
+        if (!target) {
+            return;
+        }
+        var previousValue = target[eventNameSymbol];
+        if (previousValue) {
+            target.removeEventListener(eventName, wrapFn);
+        }
+        if (typeof newValue === 'function') {
+            target[eventNameSymbol] = newValue;
+            target.addEventListener(eventName, wrapFn, false);
+        }
+        else {
+            target[eventNameSymbol] = null;
+        }
+    };
+    // The getter would return undefined for unassigned properties but the default value of an
+    // unassigned property is null
+    desc.get = function () {
+        // in some of windows's onproperty callback, this is undefined
+        // so we need to check it
+        var target = this;
+        if (!target && obj === _global) {
+            target = _global;
+        }
+        if (!target) {
+            return null;
+        }
+        var listener = target[eventNameSymbol];
+        if (listener) {
+            return listener;
+        }
+        else if (originalDescGet) {
+            // result will be null when use inline event attribute,
+            // such as <button onclick="func();">OK</button>
+            // because the onclick function is internal raw uncompiled handler
+            // the onclick will be evaluated when first time event was triggered or
+            // the property is accessed, https://github.com/angular/zone.js/issues/525
+            // so we should use original native get to retrieve the handler
+            var value = originalDescGet && originalDescGet.apply(this);
+            if (value) {
+                desc.set.apply(this, [value]);
+                if (typeof target[REMOVE_ATTRIBUTE] === FUNCTION) {
+                    target.removeAttribute(prop);
+                }
+                return value;
+            }
+        }
+        return null;
+    };
+    Object.defineProperty(obj, prop, desc);
+}
+function patchOnProperties(obj, properties, prototype) {
+    if (properties) {
+        for (var i = 0; i < properties.length; i++) {
+            patchProperty(obj, 'on' + properties[i], prototype);
+        }
+    }
+    else {
+        var onProperties = [];
+        for (var prop in obj) {
+            if (prop.substr(0, 2) == 'on') {
+                onProperties.push(prop);
+            }
+        }
+        for (var j = 0; j < onProperties.length; j++) {
+            patchProperty(obj, onProperties[j], prototype);
+        }
+    }
+}
 var originalInstanceKey = zoneSymbol('originalInstance');
 // wrap some native API on `window`
 
@@ -1264,26 +1359,6 @@ Zone.__load_patch('toString', function (global, Zone, api) {
  * @fileoverview
  * @suppress {missingRequire}
  */
-var __read$1 = (undefined && undefined.__read) || function (o, n) {
-    var m = typeof Symbol === "function" && o[Symbol.iterator];
-    if (!m) return o;
-    var i = m.call(o), r, ar = [], e;
-    try {
-        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
-    }
-    catch (error) { e = { error: error }; }
-    finally {
-        try {
-            if (r && !r.done && (m = i["return"])) m.call(i);
-        }
-        finally { if (e) throw e.error; }
-    }
-    return ar;
-};
-var __spread = (undefined && undefined.__spread) || function () {
-    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read$1(arguments[i]));
-    return ar;
-};
 var TRUE_STR = 'true';
 var FALSE_STR = 'false';
 // an identifier to tell ZoneTask do not create a new invoke closure
@@ -1520,7 +1595,6 @@ function patchEventTarget(_global, apis, patchOptions) {
             if (prepend === void 0) { prepend = false; }
             return function () {
                 var target = this || _global;
-                var targetZone = Zone.current;
                 var delegate = arguments[1];
                 if (!delegate) {
                     return nativeListener.apply(this, arguments);
@@ -1675,7 +1749,6 @@ function patchEventTarget(_global, apis, patchOptions) {
             if (existingTasks) {
                 for (var i = 0; i < existingTasks.length; i++) {
                     var existingTask = existingTasks[i];
-                    var typeOfDelegate = typeof delegate;
                     if (compare(existingTask, delegate)) {
                         existingTasks.splice(i, 1);
                         // set isRemoved to data for faster invokeTask check
@@ -1732,7 +1805,7 @@ function patchEventTarget(_global, apis, patchOptions) {
                     var tasks = target[symbolEventName];
                     var captureTasks = target[symbolCaptureEventName];
                     if (tasks) {
-                        var removeTasks = __spread(tasks);
+                        var removeTasks = tasks.slice();
                         for (var i = 0; i < removeTasks.length; i++) {
                             var task = removeTasks[i];
                             var delegate = task.originalDelegate ? task.originalDelegate : task.callback;
@@ -1740,7 +1813,7 @@ function patchEventTarget(_global, apis, patchOptions) {
                         }
                     }
                     if (captureTasks) {
-                        var removeTasks = __spread(captureTasks);
+                        var removeTasks = captureTasks.slice();
                         for (var i = 0; i < removeTasks.length; i++) {
                             var task = removeTasks[i];
                             var delegate = task.originalDelegate ? task.originalDelegate : task.callback;
@@ -1792,13 +1865,6 @@ function findEventTasks(target, eventName) {
  * found in the LICENSE file at https://angular.io/license
  */
 Zone.__load_patch('EventEmitter', function (global, Zone, api) {
-    var callAndReturnFirstParam = function (fn) {
-        return function (self, args) {
-            fn(self, args);
-            return self;
-        };
-    };
-    // For EventEmitter
     var EE_ADD_LISTENER = 'addListener';
     var EE_PREPEND_LISTENER = 'prependListener';
     var EE_REMOVE_LISTENER = 'removeListener';
@@ -2016,6 +2082,11 @@ function patchTimer(window, setName, cancelName, nameSuffix) {
  */
 var set = 'set';
 var clear = 'clear';
+Zone.__load_patch('node_util', function (global, Zone, api) {
+    api.patchOnProperties = patchOnProperties;
+    api.patchMethod = patchMethod;
+    api.patchArguments = patchArguments;
+});
 Zone.__load_patch('node_timers', function (global, Zone, api) {
     // Timers
     var globalUseTimeoutFromTimer = false;
