@@ -495,7 +495,7 @@ describe(
                   });
         });
 
-        it('should resolve if the Promise subclass resolves', function() {
+        it('should resolve if the Promise subclass resolves', function(done) {
           const myPromise = new MyPromise(function(resolve: any, reject: Function) {
             resolve('foo');
           });
@@ -506,6 +506,7 @@ describe(
               })
               .then(function(result) {
                 expect(result).toBe('foo');
+                done();
               });
         });
       });

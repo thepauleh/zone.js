@@ -35,17 +35,6 @@
   // a `beforeEach` or `it`.
   const syncZone = ambientZone.fork(new SyncTestZoneSpec('jasmine.describe'));
 
-  // This is the zone which will be used for running individual tests.
-  // It will be a proxy zone, so that the tests function can retroactively install
-  // different zones.
-  // Example:
-  //   - In beforeEach() do childZone = Zone.current.fork(...);
-  //   - In it() try to do fakeAsync(). The issue is that because the beforeEach forked the
-  //     zone outside of fakeAsync it will be able to escape the fakeAsync rules.
-  //   - Because ProxyZone is parent fo `childZone` fakeAsync can retroactively add
-  //     fakeAsync behavior to the childZone.
-  let testProxyZone: Zone = null;
-
   // Monkey patch all of the jasmine DSL so that each function runs in appropriate zone.
   const jasmineEnv: any = jasmine.getEnv();
   ['describe', 'xdescribe', 'fdescribe'].forEach((methodName) => {
@@ -92,9 +81,9 @@
     // Note we have to make a function with correct number of arguments, otherwise jasmine will
     // think that all functions are sync or async.
     return testBody && (testBody.length ? function(done: Function) {
-             return testProxyZone.run(testBody, this, [done]);
+             return this.queueRunner.testProxyZone.run(testBody, this, [done]);
            } : function() {
-             return testProxyZone.run(testBody, this);
+             return this.queueRunner.testProxyZone.run(testBody, this);
            });
   }
   interface QueueRunner {
@@ -114,17 +103,51 @@
   const QueueRunner = (jasmine as any).QueueRunner as {new (attrs: QueueRunnerAttrs): QueueRunner};
   (jasmine as any).QueueRunner = (function(_super) {
     __extends(ZoneQueueRunner, _super);
-    function ZoneQueueRunner(attrs: {onComplete: Function}) {
+    function ZoneQueueRunner(attrs: {onComplete: Function, userContext?: any}) {
       attrs.onComplete = ((fn) => () => {
         // All functions are done, clear the test zone.
-        testProxyZone = null;
+        this.testProxyZone = null;
         ambientZone.scheduleMicroTask('jasmine.onComplete', fn);
       })(attrs.onComplete);
+      // create a userContext to hold the queueRunner itself
+      // so we can access the testProxy in it/xit/beforeEach ...
+      if ((jasmine as any).UserContext) {
+        if (!attrs.userContext) {
+          attrs.userContext = new (jasmine as any).UserContext();
+        }
+        attrs.userContext.queueRunner = this;
+      } else {
+        if (!attrs.userContext) {
+          attrs.userContext = {};
+        }
+        attrs.userContext.queueRunner = this;
+      }
       _super.call(this, attrs);
     }
     ZoneQueueRunner.prototype.execute = function() {
-      if (Zone.current !== ambientZone) throw new Error('Unexpected Zone: ' + Zone.current.name);
-      testProxyZone = ambientZone.fork(new ProxyZoneSpec());
+      let zone: Zone = Zone.current;
+      let isChildOfAmbientZone = false;
+      while(zone) {
+        if (zone === ambientZone) {
+          isChildOfAmbientZone = true;
+          break;
+        }
+        zone = zone.parent;
+      } 
+
+      if (!isChildOfAmbientZone) throw new Error('Unexpected Zone: ' + Zone.current.name);
+
+      // This is the zone which will be used for running individual tests.
+      // It will be a proxy zone, so that the tests function can retroactively install
+      // different zones.
+      // Example:
+      //   - In beforeEach() do childZone = Zone.current.fork(...);
+      //   - In it() try to do fakeAsync(). The issue is that because the beforeEach forked the
+      //     zone outside of fakeAsync it will be able to escape the fakeAsync rules.
+      //   - Because ProxyZone is parent fo `childZone` fakeAsync can retroactively add
+      //     fakeAsync behavior to the childZone.
+
+      this.testProxyZone = ambientZone.fork(new ProxyZoneSpec());
       if (!Zone.currentTask) {
         // if we are not running in a task then if someone would register a
         // element.addEventListener and then calling element.click() the
