@@ -19,7 +19,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 (function (global) {
-    var Scheduler = (function () {
+    var Scheduler = /** @class */ (function () {
         function Scheduler() {
             // Next scheduler id.
             this.nextId = 0;
@@ -148,7 +148,7 @@
         };
         return Scheduler;
     }());
-    var FakeAsyncTestZoneSpec = (function () {
+    var FakeAsyncTestZoneSpec = /** @class */ (function () {
         function FakeAsyncTestZoneSpec(namePrefix, trackPendingRequestAnimationFrame, macroTaskOptions) {
             if (trackPendingRequestAnimationFrame === void 0) { trackPendingRequestAnimationFrame = false; }
             this.trackPendingRequestAnimationFrame = trackPendingRequestAnimationFrame;

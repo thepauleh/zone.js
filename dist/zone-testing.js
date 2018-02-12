@@ -28,7 +28,7 @@ var creationTrace = '__creationTrace__';
 var ERROR_TAG = 'STACKTRACE TRACKING';
 var SEP_TAG = '__SEP_TAG__';
 var sepTemplate = SEP_TAG + '@[native]';
-var LongStackTrace = (function () {
+var LongStackTrace = /** @class */ (function () {
     function LongStackTrace() {
         this.error = getStacktrace();
         this.timestamp = new Date();
@@ -178,7 +178,7 @@ computeIgnoreFrames();
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-var ProxyZoneSpec = (function () {
+var ProxyZoneSpec = /** @class */ (function () {
     function ProxyZoneSpec(defaultSpecDelegate) {
         if (defaultSpecDelegate === void 0) { defaultSpecDelegate = null; }
         this.defaultSpecDelegate = defaultSpecDelegate;
@@ -292,7 +292,7 @@ Zone['ProxyZoneSpec'] = ProxyZoneSpec;
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-var SyncTestZoneSpec = (function () {
+var SyncTestZoneSpec = /** @class */ (function () {
     function SyncTestZoneSpec(namePrefix) {
         this.runZone = Zone.current;
         this.name = 'syncTestZone for ' + namePrefix;
@@ -351,16 +351,6 @@ Zone['SyncTestZoneSpec'] = SyncTestZoneSpec;
     // error if any asynchronous operations are attempted inside of a `describe` but outside of
     // a `beforeEach` or `it`.
     var syncZone = ambientZone.fork(new SyncTestZoneSpec('jasmine.describe'));
-    // This is the zone which will be used for running individual tests.
-    // It will be a proxy zone, so that the tests function can retroactively install
-    // different zones.
-    // Example:
-    //   - In beforeEach() do childZone = Zone.current.fork(...);
-    //   - In it() try to do fakeAsync(). The issue is that because the beforeEach forked the
-    //     zone outside of fakeAsync it will be able to escape the fakeAsync rules.
-    //   - Because ProxyZone is parent fo `childZone` fakeAsync can retroactively add
-    //     fakeAsync behavior to the childZone.
-    var testProxyZone = null;
     // Monkey patch all of the jasmine DSL so that each function runs in appropriate zone.
     var jasmineEnv = jasmine.getEnv();
     ['describe', 'xdescribe', 'fdescribe'].forEach(function (methodName) {
@@ -404,27 +394,60 @@ Zone['SyncTestZoneSpec'] = SyncTestZoneSpec;
         // Note we have to make a function with correct number of arguments, otherwise jasmine will
         // think that all functions are sync or async.
         return testBody && (testBody.length ? function (done) {
-            return testProxyZone.run(testBody, this, [done]);
+            return this.queueRunner.testProxyZone.run(testBody, this, [done]);
         } : function () {
-            return testProxyZone.run(testBody, this);
+            return this.queueRunner.testProxyZone.run(testBody, this);
         });
     }
     var QueueRunner = jasmine.QueueRunner;
     jasmine.QueueRunner = (function (_super) {
         __extends(ZoneQueueRunner, _super);
         function ZoneQueueRunner(attrs) {
+            var _this = this;
             attrs.onComplete = (function (fn) { return function () {
                 // All functions are done, clear the test zone.
-                testProxyZone = null;
+                _this.testProxyZone = null;
                 ambientZone.scheduleMicroTask('jasmine.onComplete', fn);
             }; })(attrs.onComplete);
+            // create a userContext to hold the queueRunner itself
+            // so we can access the testProxy in it/xit/beforeEach ...
+            if (jasmine.UserContext) {
+                if (!attrs.userContext) {
+                    attrs.userContext = new jasmine.UserContext();
+                }
+                attrs.userContext.queueRunner = this;
+            }
+            else {
+                if (!attrs.userContext) {
+                    attrs.userContext = {};
+                }
+                attrs.userContext.queueRunner = this;
+            }
             _super.call(this, attrs);
         }
         ZoneQueueRunner.prototype.execute = function () {
             var _this = this;
-            if (Zone.current !== ambientZone)
+            var zone = Zone.current;
+            var isChildOfAmbientZone = false;
+            while (zone) {
+                if (zone === ambientZone) {
+                    isChildOfAmbientZone = true;
+                    break;
+                }
+                zone = zone.parent;
+            }
+            if (!isChildOfAmbientZone)
                 throw new Error('Unexpected Zone: ' + Zone.current.name);
-            testProxyZone = ambientZone.fork(new ProxyZoneSpec());
+            // This is the zone which will be used for running individual tests.
+            // It will be a proxy zone, so that the tests function can retroactively install
+            // different zones.
+            // Example:
+            //   - In beforeEach() do childZone = Zone.current.fork(...);
+            //   - In it() try to do fakeAsync(). The issue is that because the beforeEach forked the
+            //     zone outside of fakeAsync it will be able to escape the fakeAsync rules.
+            //   - Because ProxyZone is parent fo `childZone` fakeAsync can retroactively add
+            //     fakeAsync behavior to the childZone.
+            this.testProxyZone = ambientZone.fork(new ProxyZoneSpec());
             if (!Zone.currentTask) {
                 // if we are not running in a task then if someone would register a
                 // element.addEventListener and then calling element.click() the
@@ -448,7 +471,7 @@ Zone['SyncTestZoneSpec'] = SyncTestZoneSpec;
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-var AsyncTestZoneSpec = (function () {
+var AsyncTestZoneSpec = /** @class */ (function () {
     function AsyncTestZoneSpec(finishCallback, failCallback, namePrefix) {
         this._pendingMicroTasks = false;
         this._pendingMacroTasks = false;
@@ -516,7 +539,7 @@ Zone['AsyncTestZoneSpec'] = AsyncTestZoneSpec;
  * found in the LICENSE file at https://angular.io/license
  */
 (function (global) {
-    var Scheduler = (function () {
+    var Scheduler = /** @class */ (function () {
         function Scheduler() {
             // Next scheduler id.
             this.nextId = 0;
@@ -645,7 +668,7 @@ Zone['AsyncTestZoneSpec'] = AsyncTestZoneSpec;
         };
         return Scheduler;
     }());
-    var FakeAsyncTestZoneSpec = (function () {
+    var FakeAsyncTestZoneSpec = /** @class */ (function () {
         function FakeAsyncTestZoneSpec(namePrefix, trackPendingRequestAnimationFrame, macroTaskOptions) {
             if (trackPendingRequestAnimationFrame === void 0) { trackPendingRequestAnimationFrame = false; }
             this.trackPendingRequestAnimationFrame = trackPendingRequestAnimationFrame;
