@@ -138,7 +138,7 @@ describe('ProxySpec', () => {
     });
 
     it('should Task', () => {
-      const fn = () => null as void;
+      const fn = (): any => null;
       const task = proxyZone.scheduleMacroTask('test', fn, {}, () => null, () => null);
       expect(task.source).toEqual('test');
       proxyZone.cancelTask(task);
@@ -192,16 +192,10 @@ describe('ProxySpec', () => {
 
       setTimeout(() => {
         expect(log).toEqual([
-          'zoneSpec1 hasTask: false,true',
-          'zoneSpec2 hasTask: false,true',
-          'zoneSpec2 hasTask: true,true',
-          'zoneSpec2 hasTask: true,true',
-          'then in zoneSpec2',
-          'then in zoneSpec2',
-          'zoneSpec2 hasTask: false,true',
-          'timeout in zoneSpec1',
-          'timeout in null spec',
-          'zoneSpec2 hasTask: false,false'
+          'zoneSpec1 hasTask: false,true', 'zoneSpec2 hasTask: false,true',
+          'zoneSpec2 hasTask: true,true', 'zoneSpec2 hasTask: true,true', 'then in zoneSpec2',
+          'then in zoneSpec2', 'zoneSpec2 hasTask: false,true', 'timeout in zoneSpec1',
+          'timeout in null spec', 'zoneSpec2 hasTask: false,false'
         ]);
         done();
       }, 300);

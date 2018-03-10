@@ -9,12 +9,12 @@
 class ProxyZoneSpec implements ZoneSpec {
   name: string = 'ProxyZone';
 
-  private _delegateSpec: ZoneSpec;
+  private _delegateSpec: ZoneSpec|null = null;
 
   properties: {[k: string]: any} = {'ProxyZoneSpec': this};
-  propertyKeys: string[] = null;
+  propertyKeys: string[]|null = null;
 
-  lastTaskState: HasTaskState = null;
+  lastTaskState: HasTaskState|null = null;
   isNeedToTriggerHasTask = false;
 
   static get(): ProxyZoneSpec {
@@ -32,19 +32,19 @@ class ProxyZoneSpec implements ZoneSpec {
     return ProxyZoneSpec.get();
   }
 
-  constructor(private defaultSpecDelegate: ZoneSpec = null) {
+  constructor(private defaultSpecDelegate: ZoneSpec|null = null) {
     this.setDelegate(defaultSpecDelegate);
   }
 
 
-  setDelegate(delegateSpec: ZoneSpec) {
+  setDelegate(delegateSpec: ZoneSpec|null) {
     const isNewDelegate = this._delegateSpec !== delegateSpec;
     this._delegateSpec = delegateSpec;
     this.propertyKeys && this.propertyKeys.forEach((key) => delete this.properties[key]);
     this.propertyKeys = null;
     if (delegateSpec && delegateSpec.properties) {
       this.propertyKeys = Object.keys(delegateSpec.properties);
-      this.propertyKeys.forEach((k) => this.properties[k] = delegateSpec.properties[k]);
+      this.propertyKeys.forEach((k) => this.properties[k] = delegateSpec.properties![k]);
     }
     // if set a new delegateSpec, shoulde check whether need to
     // trigger hasTask or not
@@ -68,7 +68,7 @@ class ProxyZoneSpec implements ZoneSpec {
       // last delegateSpec has microTask or macroTask
       // should call onHasTask in current delegateSpec
       this.isNeedToTriggerHasTask = false;
-      this.onHasTask(parentZoneDelegate, currentZone, targetZone, this.lastTaskState); 
+      this.onHasTask(parentZoneDelegate, currentZone, targetZone, this.lastTaskState);
     }
   }
 
@@ -97,7 +97,7 @@ class ProxyZoneSpec implements ZoneSpec {
 
   onInvoke(
       parentZoneDelegate: ZoneDelegate, currentZone: Zone, targetZone: Zone, delegate: Function,
-      applyThis: any, applyArgs: any[], source: string): any {
+      applyThis: any, applyArgs?: any[], source?: string): any {
     this.tryTriggerHasTask(parentZoneDelegate, currentZone, targetZone);
     if (this._delegateSpec && this._delegateSpec.onInvoke) {
       return this._delegateSpec.onInvoke(

@@ -22,13 +22,12 @@ class AsyncTestZoneSpec implements ZoneSpec {
     this._finishCallback = finishCallback;
     this._failCallback = failCallback;
     this.name = 'asyncTestZone for ' + namePrefix;
-    this.properties = {
-      'AsyncTestZoneSpec': this 
-    };
+    this.properties = {'AsyncTestZoneSpec': this};
   }
 
   _finishCallbackIfDone() {
-    if (!(this._pendingMicroTasks || this._pendingMacroTasks || this.unresolvedChainedPromiseCount !== 0)) {
+    if (!(this._pendingMicroTasks || this._pendingMacroTasks ||
+          this.unresolvedChainedPromiseCount !== 0)) {
       // We do this because we would like to catch unhandled rejected promises.
       this.runZone.run(() => {
         setTimeout(() => {
@@ -65,16 +64,18 @@ class AsyncTestZoneSpec implements ZoneSpec {
       this._isSync = false;
     }
     if (task.type === 'microTask' && task.data && task.data instanceof Promise) {
-      // check whether the promise is a chained promise 
+      // check whether the promise is a chained promise
       if ((task.data as any)[AsyncTestZoneSpec.symbolParentUnresolved] === true) {
         // chained promise is being scheduled
-        this.unresolvedChainedPromiseCount --;
+        this.unresolvedChainedPromiseCount--;
       }
-    } 
+    }
     return delegate.scheduleTask(target, task);
   }
 
-  onInvokeTask(delegate: ZoneDelegate, current: Zone, target: Zone, task: Task, applyThis: any, applyArgs: any) {
+  onInvokeTask(
+      delegate: ZoneDelegate, current: Zone, target: Zone, task: Task, applyThis: any,
+      applyArgs: any) {
     if (task.type !== 'eventTask') {
       this._isSync = false;
     }
@@ -95,7 +96,7 @@ class AsyncTestZoneSpec implements ZoneSpec {
   // was scheduled/invoked/canceled.
   onInvoke(
       parentZoneDelegate: ZoneDelegate, currentZone: Zone, targetZone: Zone, delegate: Function,
-      applyThis: any, applyArgs: any[], source: string): any {
+      applyThis: any, applyArgs?: any[], source?: string): any {
     let previousTaskCounts: any = null;
     try {
       this.patchPromiseForTest();
