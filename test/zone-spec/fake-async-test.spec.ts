@@ -6,13 +6,13 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import '../../lib/zone-spec/fake-async-test';
+import 'rxjs/add/operator/delay';
+import '../../lib/rxjs/rxjs-fake-async';
+
+import {Observable} from 'rxjs/Observable';
 
 import {isNode, patchMacroTask} from '../../lib/common/utils';
 import {ifEnvSupports} from '../test-util';
-import {Observable} from 'rxjs/Observable';
-import 'rxjs/add/operator/delay';
-import '../../lib/rxjs/rxjs-fake-async';
 
 function supportNode() {
   return isNode;
@@ -212,7 +212,7 @@ describe('FakeAsyncTestZoneSpec', () => {
         let id = setTimeout((arg1, arg2) => {
           value = arg1 + arg2;
         }, 0, 'expected', ' value');
-    
+
         testZoneSpec.tick();
         expect(value).toEqual('expected value');
       });
@@ -245,7 +245,7 @@ describe('FakeAsyncTestZoneSpec', () => {
         let id = setInterval((arg1, arg2) => {
           value = arg1 + arg2;
         }, 10, 'expected', ' value');
-    
+
         testZoneSpec.tick(10);
         expect(value).toEqual('expected value');
       });
@@ -859,8 +859,7 @@ describe('FakeAsyncTestZoneSpec', () => {
     let fakeAsyncTestZone: Zone;
 
     beforeEach(() => {
-      testZoneSpec = new FakeAsyncTestZoneSpec(
-          'name', false);
+      testZoneSpec = new FakeAsyncTestZoneSpec('name', false);
       fakeAsyncTestZone = Zone.current.fork(testZoneSpec);
     });
 
@@ -874,46 +873,50 @@ describe('FakeAsyncTestZoneSpec', () => {
     });
   });
 
-  describe('fakeAsyncTest should patch jasmine.clock', ifEnvSupports(() => {
-    return typeof jasmine.clock === 'function';
-  }, () => {
-    beforeEach(() => {
-      jasmine.clock().install();
-    });
+  describe(
+      'fakeAsyncTest should patch jasmine.clock',
+      ifEnvSupports(
+          () => {
+            return typeof jasmine.clock === 'function';
+          },
+          () => {
+            beforeEach(() => {
+              jasmine.clock().install();
+            });
 
-    afterEach(() => {
-      jasmine.clock().uninstall();
-    });
+            afterEach(() => {
+              jasmine.clock().uninstall();
+            });
 
-    it('should get date diff correctly', () => {
-      const start = Date.now();
-      jasmine.clock().tick(100);
-      const end = Date.now();
-      expect(end - start).toBe(100);
-    });
+            it('should get date diff correctly', () => {
+              const start = Date.now();
+              jasmine.clock().tick(100);
+              const end = Date.now();
+              expect(end - start).toBe(100);
+            });
 
-    it('should mock date correctly', () => {
-      const baseTime = new Date(2013, 9, 23);
-      jasmine.clock().mockDate(baseTime);
-      const start = Date.now();
-      expect(start).toBe(baseTime.getTime());
-      jasmine.clock().tick(100);
-      const end = Date.now();
-      expect(end - start).toBe(100);
-      expect(end).toBe(baseTime.getTime() + 100);
-    });
+            it('should mock date correctly', () => {
+              const baseTime = new Date(2013, 9, 23);
+              jasmine.clock().mockDate(baseTime);
+              const start = Date.now();
+              expect(start).toBe(baseTime.getTime());
+              jasmine.clock().tick(100);
+              const end = Date.now();
+              expect(end - start).toBe(100);
+              expect(end).toBe(baseTime.getTime() + 100);
+            });
 
-    it('should handle new Date correctly', () => {
-      const baseTime = new Date(2013, 9, 23);
-      jasmine.clock().mockDate(baseTime);
-      const start = new Date();
-      expect(start.getTime()).toBe(baseTime.getTime());
-      jasmine.clock().tick(100);
-      const end = new Date();
-      expect(end.getTime() - start.getTime()).toBe(100);
-      expect(end.getTime()).toBe(baseTime.getTime() + 100);
-    });
-  }));
+            it('should handle new Date correctly', () => {
+              const baseTime = new Date(2013, 9, 23);
+              jasmine.clock().mockDate(baseTime);
+              const start = new Date();
+              expect(start.getTime()).toBe(baseTime.getTime());
+              jasmine.clock().tick(100);
+              const end = new Date();
+              expect(end.getTime() - start.getTime()).toBe(100);
+              expect(end.getTime()).toBe(baseTime.getTime() + 100);
+            });
+          }));
 
   describe('fakeAsyncTest should patch rxjs scheduler', () => {
     let FakeAsyncTestZoneSpec = (Zone as any)['FakeAsyncTestZoneSpec'];
@@ -921,8 +924,7 @@ describe('FakeAsyncTestZoneSpec', () => {
     let fakeAsyncTestZone: Zone;
 
     beforeEach(() => {
-      testZoneSpec = new FakeAsyncTestZoneSpec(
-          'name', false);
+      testZoneSpec = new FakeAsyncTestZoneSpec('name', false);
       fakeAsyncTestZone = Zone.current.fork(testZoneSpec);
     });
 

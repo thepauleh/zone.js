@@ -6,11 +6,8 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import '../lib/mocha/mocha';
-declare const global: any;
-
 ((context: any) => {
-  context['jasmine'] = global['jasmine'] || {};
+  context['jasmine'] = context['jasmine'] || {};
   context['jasmine'].createSpy = function(spyName: string) {
     let spy: any = function(...params: any[]) {
       spy.countCall++;
@@ -164,4 +161,4 @@ declare const global: any;
       }
     };
   };
-})(window);
+})(typeof window !== 'undefined' && window || typeof self !== 'undefined' && self || global);

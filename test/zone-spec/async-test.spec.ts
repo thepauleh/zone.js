@@ -6,7 +6,6 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import '../../lib/zone-spec/async-test';
 import {ifEnvSupports} from '../test-util';
 
 describe('AsyncTestZoneSpec', function() {
@@ -351,18 +350,21 @@ describe('AsyncTestZoneSpec', function() {
 
     function testAsync(fn: Function, doneFn?: Function) {
       return function(done: any) {
-        runInTestZone(fn, this, function() {
-          if (doneFn) {
-            doneFn();
-          }
-          done();
-        }, (err: any) => {
-          if (typeof err === 'string') {
-            return done.fail(new Error(<string>err));
-          } else {
-            done.fail(err);
-          }
-        });
+        runInTestZone(
+            fn, this,
+            function() {
+              if (doneFn) {
+                doneFn();
+              }
+              done();
+            },
+            (err: any) => {
+              if (typeof err === 'string') {
+                return done.fail(new Error(<string>err));
+              } else {
+                done.fail(err);
+              }
+            });
       };
     }
 
@@ -405,167 +407,196 @@ describe('AsyncTestZoneSpec', function() {
 
     describe('test without beforeEach', () => {
       const logs: string[] = [];
-      it('should automatically done after async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['timeout']);
-        logs.splice(0);
-      }));
-  
-      it('should automatically done after all nested async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-          setTimeout(() => {
-            logs.push('nested timeout');
-          }, 100);
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['timeout', 'nested timeout']);
-        logs.splice(0);
-      }));
-  
-      it('should automatically done after multiple async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('1st timeout');
-        }, 100);
-  
-        setTimeout(() => {
-          logs.push('2nd timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['1st timeout', '2nd timeout']);
-        logs.splice(0);
-      }));
+      it('should automatically done after async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['timeout']);
+               logs.splice(0);
+             }));
+
+      it('should automatically done after all nested async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+                 setTimeout(() => {
+                   logs.push('nested timeout');
+                 }, 100);
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['timeout', 'nested timeout']);
+               logs.splice(0);
+             }));
+
+      it('should automatically done after multiple async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('1st timeout');
+               }, 100);
+
+               setTimeout(() => {
+                 logs.push('2nd timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['1st timeout', '2nd timeout']);
+               logs.splice(0);
+             }));
     });
-  
+
     describe('test with sync beforeEach', () => {
       const logs: string[] = [];
-  
+
       beforeEach(() => {
         logs.splice(0);
         logs.push('beforeEach');
       });
-  
-      it('should automatically done after async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', 'timeout']);
-      }));
+
+      it('should automatically done after async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', 'timeout']);
+             }));
     });
-  
+
     describe('test with async beforeEach', () => {
       const logs: string[] = [];
-  
+
       beforeEach(testAsync(() => {
         setTimeout(() => {
           logs.splice(0);
           logs.push('beforeEach');
         }, 100);
       }));
-  
-      it('should automatically done after async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', 'timeout']);
-      }));
-  
-      it('should automatically done after all nested async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-          setTimeout(() => {
-            logs.push('nested timeout');
-          }, 100);
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', 'timeout', 'nested timeout']);
-      }));
-  
-      it('should automatically done after multiple async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('1st timeout');
-        }, 100);
-  
-        setTimeout(() => {
-          logs.push('2nd timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', '1st timeout', '2nd timeout']);
-      }));
+
+      it('should automatically done after async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', 'timeout']);
+             }));
+
+      it('should automatically done after all nested async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+                 setTimeout(() => {
+                   logs.push('nested timeout');
+                 }, 100);
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', 'timeout', 'nested timeout']);
+             }));
+
+      it('should automatically done after multiple async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('1st timeout');
+               }, 100);
+
+               setTimeout(() => {
+                 logs.push('2nd timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', '1st timeout', '2nd timeout']);
+             }));
     });
-  
+
     describe('test with async beforeEach and sync afterEach', () => {
       const logs: string[] = [];
-  
+
       beforeEach(testAsync(() => {
         setTimeout(() => {
           expect(logs).toEqual([]);
           logs.push('beforeEach');
         }, 100);
       }));
-  
+
       afterEach(() => {
         logs.splice(0);
       });
-  
-      it('should automatically done after async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', 'timeout']);
-      }));
+
+      it('should automatically done after async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', 'timeout']);
+             }));
     });
-  
+
     describe('test with async beforeEach and async afterEach', () => {
       const logs: string[] = [];
-  
+
       beforeEach(testAsync(() => {
         setTimeout(() => {
           expect(logs).toEqual([]);
           logs.push('beforeEach');
         }, 100);
       }));
-  
+
       afterEach(testAsync(() => {
         setTimeout(() => {
           logs.splice(0);
         }, 100);
       }));
-  
-      it('should automatically done after async tasks finished', testAsync(() => {
-        setTimeout(() => {
-          logs.push('timeout');
-        }, 100);
-      }, () => {
-        expect(logs).toEqual(['beforeEach', 'timeout']);
-      }));
+
+      it('should automatically done after async tasks finished',
+         testAsync(
+             () => {
+               setTimeout(() => {
+                 logs.push('timeout');
+               }, 100);
+             },
+             () => {
+               expect(logs).toEqual(['beforeEach', 'timeout']);
+             }));
     });
 
     describe('return promise', () => {
       let value = 'init';
-      it('should only call finish once', testAsync(() => {
-        return new Promise((resolve, _) => {
-          setTimeout(() => {
-            value = 'timeout';
-            resolve();
-          }, 100);
-        });
-      }, () => {
-        expect(value).toEqual('timeout');
-      }));
+      it('should only call finish once', testAsync(
+                                             () => {
+                                               return new Promise((resolve, _) => {
+                                                 setTimeout(() => {
+                                                   value = 'timeout';
+                                                   resolve();
+                                                 }, 100);
+                                               });
+                                             },
+                                             () => {
+                                               expect(value).toEqual('timeout');
+                                             }));
     });
   });
 
   describe('should be able to handle async for both beforeEach and it', () => {
     let log: string[];
     const AsyncTestZoneSpec = (Zone as any)['AsyncTestZoneSpec'];
-  
+
     function asyncTest(testBody: () => void, finishCallback: Function, failCallback: Function) {
       return function() {
         const proxyZoneSpec = Zone.current.get('ProxyZoneSpec');
@@ -576,37 +607,48 @@ describe('AsyncTestZoneSpec', function() {
         // construct AsyncTestZoneSpec in parent zone
         // to prevent infinite loop
         Zone.current.parent.run(() => {
-          proxyZoneSpec.setDelegate(new AsyncTestZoneSpec(() => {
-            proxyZoneSpec.setDelegate(lastDelegate);
-            finishCallback();
-          }, () => {
-            proxyZoneSpec.setDelegate(lastDelegate);
-            failCallback();
-          }), 'async');
+          proxyZoneSpec.setDelegate(
+              new AsyncTestZoneSpec(
+                  () => {
+                    proxyZoneSpec.setDelegate(lastDelegate);
+                    finishCallback();
+                  },
+                  () => {
+                    proxyZoneSpec.setDelegate(lastDelegate);
+                    failCallback();
+                  }),
+              'async');
         });
         testBody.apply(this, arguments);
       };
     }
 
-    beforeEach(asyncTest(() => {
-      log = [];
-      setTimeout(() => {
-        log.push('beforeEach');
-      }, 50);
-    }, () => {
-      expect(log).toEqual(['beforeEach']);
-    }, () => {
-      fail('should not fail');
-    }));
+    beforeEach(asyncTest(
+        () => {
+          log = [];
+          setTimeout(() => {
+            log.push('beforeEach');
+          }, 50);
+        },
+        () => {
+          expect(log).toEqual(['beforeEach']);
+        },
+        () => {
+          fail('should not fail');
+        }));
 
-    it('should support asyncTest with an async beforeEach', asyncTest(() => {
-      setTimeout(() => {
-        log.push('timeout');
-      }, 50); 
-    }, () => {
-      expect(log).toEqual(['beforeEach', 'timeout']);
-    }, () => {
-      fail('should not fail');
-    }));
+    it('should support asyncTest with an async beforeEach',
+       asyncTest(
+           () => {
+             setTimeout(() => {
+               log.push('timeout');
+             }, 50);
+           },
+           () => {
+             expect(log).toEqual(['beforeEach', 'timeout']);
+           },
+           () => {
+             fail('should not fail');
+           }));
   });
 });

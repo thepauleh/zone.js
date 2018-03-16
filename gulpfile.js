@@ -42,7 +42,9 @@ function generateScript(inFile, outFile, minify, callback) {
               'rxjs/Observable': 'Rx',
               'rxjs/Subscriber': 'Rx',
               'rxjs/Subscription': 'Rx',
+              'rxjs/Scheduler': 'Rx',
               'rxjs/scheduler/asap': 'Rx.Scheduler',
+              'rxjs/scheduler/async': 'Rx.Scheduler',
               'rxjs/symbol/rxSubscriber': 'Rx.Symbol'
             }
           },
@@ -221,19 +223,23 @@ gulp.task('build/zone-patch-socket-io.min.js', ['compile-esm'], function(cb) {
 });
 
 gulp.task('build/zone-patch-promise-testing.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/testing/promise-testing.ts', 'zone-patch-promise-test.js', false, cb);
+  return generateScript(
+      './lib/testing/promise-testing.ts', 'zone-patch-promise-test.js', false, cb);
 });
 
 gulp.task('build/zone-patch-promise-testing.min.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/testing/promise-testing.ts', 'zone-patch-promise-test.min.js', true, cb);
+  return generateScript(
+      './lib/testing/promise-testing.ts', 'zone-patch-promise-test.min.js', true, cb);
 });
 
 gulp.task('build/zone-patch-resize-observer.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/browser/webapis-resize-observer.ts', 'zone-patch-resize-observer.js', false, cb);
+  return generateScript(
+      './lib/browser/webapis-resize-observer.ts', 'zone-patch-resize-observer.js', false, cb);
 });
 
 gulp.task('build/zone-patch-resize-observer.min.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/browser/webapis-resize-observer.ts', 'zone-patch-resize-observer.min.js', true, cb);
+  return generateScript(
+      './lib/browser/webapis-resize-observer.ts', 'zone-patch-resize-observer.min.js', true, cb);
 });
 
 gulp.task('build/bluebird.js', ['compile-esm'], function(cb) {
@@ -245,11 +251,11 @@ gulp.task('build/bluebird.min.js', ['compile-esm'], function(cb) {
 });
 
 gulp.task('build/zone-patch-jsonp.js', ['compile-esm'], function(cb) {
-    return generateScript('./lib/extra/jsonp.ts', 'zone-patch-jsonp.js', false, cb);
+  return generateScript('./lib/extra/jsonp.ts', 'zone-patch-jsonp.js', false, cb);
 });
 
 gulp.task('build/zone-patch-jsonp.min.js', ['compile-esm'], function(cb) {
-    return generateScript('./lib/extra/jsonp.ts', 'zone-patch-jsonp.min.js', true, cb);
+  return generateScript('./lib/extra/jsonp.ts', 'zone-patch-jsonp.min.js', true, cb);
 });
 
 gulp.task('build/jasmine-patch.js', ['compile-esm'], function(cb) {
@@ -323,11 +329,13 @@ gulp.task('build/rxjs.min.js', ['compile-esm'], function(cb) {
 });
 
 gulp.task('build/rxjs-fake-async.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/rxjs/rxjs-fake-async.ts', 'zone-patch-rxjs-fake-async.js', false, cb);
+  return generateScript(
+      './lib/rxjs/rxjs-fake-async.ts', 'zone-patch-rxjs-fake-async.js', false, cb);
 });
 
 gulp.task('build/rxjs-fake-async.min.js', ['compile-esm'], function(cb) {
-  return generateScript('./lib/rxjs/rxjs-fake-async.ts', 'zone-patch-rxjs-fake-async.min.js', true, cb);
+  return generateScript(
+      './lib/rxjs/rxjs-fake-async.ts', 'zone-patch-rxjs-fake-async.min.js', true, cb);
 });
 
 gulp.task('build/closure.js', function() {

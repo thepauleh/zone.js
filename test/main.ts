@@ -28,14 +28,18 @@ if ((window as any)[(Zone as any).__symbol__('setTimeout')]) {
 } else {
   // this means that Zone has not patched the browser yet, which means we must be running in
   // build mode and need to load the browser patch.
-  browserPatchedPromise = System.import('/base/build/test/browser-zone-setup');
+  browserPatchedPromise = System.import('/base/build/test/browser-zone-setup').then(() => {
+    let testFrameworkPatch = typeof(window as any).Mocha !== 'undefined' ?
+        '/base/build/lib/mocha/mocha' :
+        '/base/build/lib/jasmine/jasmine';
+    return System.import(testFrameworkPatch);
+  });
 }
 
 browserPatchedPromise.then(() => {
   let testFrameworkPatch = typeof(window as any).Mocha !== 'undefined' ?
       '/base/build/test/test-env-setup-mocha' :
       '/base/build/test/test-env-setup-jasmine';
-  // Setup test environment
   System.import(testFrameworkPatch).then(() => {
     System.import('/base/build/test/browser_entry_point')
         .then(
