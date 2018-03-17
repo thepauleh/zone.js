@@ -46,6 +46,11 @@ class ProxyZoneSpec implements ZoneSpec {
       this.propertyKeys = Object.keys(delegateSpec.properties);
       this.propertyKeys.forEach((k) => this.properties[k] = delegateSpec.properties[k]);
     }
+    // TODO: @JiaLiPassion, may remove this one after
+    // move async/fakeAsync from angular to zone.
+    if (delegateSpec && typeof(delegateSpec as any).beforeSetProxyDelegate === 'function') {
+      (delegateSpec as any).beforeSetProxyDelegate();
+    }
     // if set a new delegateSpec, shoulde check whether need to
     // trigger hasTask or not
     if (isNewDelegate && this.lastTaskState &&
@@ -60,6 +65,10 @@ class ProxyZoneSpec implements ZoneSpec {
 
 
   resetDelegate() {
+    const delegateSpec = this.getDelegate();
+    if (delegateSpec && typeof(delegateSpec as any).afterSetProxyDelegate === 'function') {
+      (delegateSpec as any).afterSetProxyDelegate();
+    }
     this.setDelegate(this.defaultSpecDelegate);
   }
 
@@ -68,7 +77,7 @@ class ProxyZoneSpec implements ZoneSpec {
       // last delegateSpec has microTask or macroTask
       // should call onHasTask in current delegateSpec
       this.isNeedToTriggerHasTask = false;
-      this.onHasTask(parentZoneDelegate, currentZone, targetZone, this.lastTaskState); 
+      this.onHasTask(parentZoneDelegate, currentZone, targetZone, this.lastTaskState);
     }
   }
 

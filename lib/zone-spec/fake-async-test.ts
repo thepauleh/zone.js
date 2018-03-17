@@ -217,6 +217,8 @@
     pendingPeriodicTimers: number[] = [];
     pendingTimers: number[] = [];
 
+    private patchDateLocked = false;
+
     constructor(
         namePrefix: string, private trackPendingRequestAnimationFrame = false,
         private macroTaskOptions?: MacroTaskOptions[]) {
@@ -346,6 +348,15 @@
       }
     }
 
+    beforeSetProxyDelegate() {
+      this.patchDateLocked = true;
+      FakeAsyncTestZoneSpec.patchDate();
+    }
+    afterSetProxyDelegate() {
+      this.patchDateLocked = false;
+      FakeAsyncTestZoneSpec.resetDate();
+    }
+
     tick(millis: number = 0, doTick?: (elapsed: number) => void): void {
       FakeAsyncTestZoneSpec.assertInZone();
       this.flushMicrotasks();
@@ -409,12 +420,14 @@
         case 'macroTask':
           switch (task.source) {
             case 'setTimeout':
-              task.data['handleId'] =
-                  this._setTimeout(task.invoke, task.data['delay'], Array.prototype.slice.call((task.data as any)['args'], 2));
+              task.data['handleId'] = this._setTimeout(
+                  task.invoke, task.data['delay'],
+                  Array.prototype.slice.call((task.data as any)['args'], 2));
               break;
             case 'setInterval':
-              task.data['handleId'] =
-                  this._setInterval(task.invoke, task.data['delay'], Array.prototype.slice.call((task.data as any)['args'], 2));
+              task.data['handleId'] = this._setInterval(
+                  task.invoke, task.data['delay'],
+                  Array.prototype.slice.call((task.data as any)['args'], 2));
               break;
             case 'XMLHttpRequest.send':
               throw new Error(
@@ -480,12 +493,16 @@
       }
     }
 
-    onInvoke(delegate: ZoneDelegate, current: Zone, target: Zone, callback: Function, applyThis: any, applyArgs: any[], source: string): any {
+    onInvoke(
+        delegate: ZoneDelegate, current: Zone, target: Zone, callback: Function, applyThis: any,
+        applyArgs: any[], source: string): any {
       try {
         FakeAsyncTestZoneSpec.patchDate();
         return delegate.invoke(target, callback, applyThis, applyArgs, source);
       } finally {
-        FakeAsyncTestZoneSpec.resetDate();
+        if (!this.patchDateLocked) {
+          FakeAsyncTestZoneSpec.resetDate();
+        }
       }
     }
 
